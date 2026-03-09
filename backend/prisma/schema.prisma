@@ -1,0 +1,145 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String   @default("Usuario")
+  email     String   @unique @default("user@fittrack.es")
+  weight    Float?
+  height    Float?
+  birthDate DateTime?
+  gender    String?  @default("no_especificado")
+  objective String?  @default("mantener")
+  calorieGoal Int?   @default(2000)
+  proteinGoal Float? @default(150)
+  carbsGoal   Float? @default(250)
+  fatsGoal    Float? @default(65)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dailyLogs     DailyLog[]
+  workoutLogs   WorkoutLog[]
+  customFoods   CustomFood[]
+  routines      Routine[]
+}
+
+model DailyLog {
+  id        Int      @id @default(autoincrement())
+  date      String
+  userId    Int      @default(1)
+  notes     String?
+  weight    Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id])
+  mealLogs   MealLog[]
+
+  @@unique([userId, date])
+}
+
+model MealLog {
+  id          Int      @id @default(autoincrement())
+  dailyLogId  Int
+  mealType    String
+  foodId      String
+  foodName    String
+  brand       String?
+  quantity    Float
+  calories    Float
+  proteins    Float    @default(0)
+  carbs       Float    @default(0)
+  fats        Float    @default(0)
+  fiber       Float    @default(0)
+  sugar       Float    @default(0)
+  sodium      Float    @default(0)
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+
+  dailyLog    DailyLog @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+}
+
+model CustomFood {
+  id          Int    @id @default(autoincrement())
+  userId      Int    @default(1)
+  name        String
+  brand       String?
+  calories    Float
+  proteins    Float  @default(0)
+  carbs       Float  @default(0)
+  fats        Float  @default(0)
+  fiber       Float  @default(0)
+  sugar       Float  @default(0)
+  sodium      Float  @default(0)
+  servingSize Float  @default(100)
+  createdAt   DateTime @default(now())
+
+  user        User   @relation(fields: [userId], references: [id])
+}
+
+model WorkoutLog {
+  id        Int      @id @default(autoincrement())
+  date      String
+  userId    Int      @default(1)
+  name      String   @default("Mi entrenamiento")
+  notes     String?
+  duration  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user          User            @relation(fields: [userId], references: [id])
+  exerciseLogs  ExerciseLog[]
+}
+
+model ExerciseLog {
+  id           Int    @id @default(autoincrement())
+  workoutLogId Int
+  exerciseId   String
+  exerciseName String
+  muscleGroup  String?
+  category     String?
+  notes        String?
+  order        Int    @default(0)
+
+  workoutLog   WorkoutLog  @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
+  sets         ExerciseSet[]
+}
+
+model ExerciseSet {
+  id            Int     @id @default(autoincrement())
+  exerciseLogId Int
+  setNumber     Int
+  reps          Int?
+  weight        Float?
+  duration      Int?
+  distance      Float?
+  restTime      Int?
+  completed     Boolean @default(false)
+  rpe           Int?
+
+  exerciseLog   ExerciseLog @relation(fields: [exerciseLogId], references: [id], onDelete: Cascade)
+}
+
+model Routine {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @default(1)
+  name        String
+  description String?
+  level       String   @default("intermediate")
+  daysPerWeek Int      @default(3)
+  days        String   // JSON: [{day, dayName, exercises:[{name,category,muscleGroup,sets,reps}]}]
+  source      String   @default("user") // 'user' | 'explore'
+  sourceId    String?  // id de la rutina curada de origen
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id])
+}
