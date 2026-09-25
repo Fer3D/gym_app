@@ -12,13 +12,16 @@
 ---
 
 ## Capturas
-
 <p align="center">
-  <img width="100%" alt="Dashboard FitTrack ES" src="https://github.com/user-attachments/assets/f16e1a38-f4d1-4743-9ff8-72df7e3c6f07" />
+  <img width="100%" alt="Nutrición FitTrack ES" src="https://github.com/user-attachments/assets/08e98a3f-44d3-4a74-b0ec-40bc63b93104" />
 </p>
 
 <p align="center">
-  <img width="100%" alt="Nutrición FitTrack ES" src="https://github.com/user-attachments/assets/c719bcae-2f12-49ff-be27-37899bb7d9d9" />
+  <img width="100%" alt="Nutrición FitTrack ES" src="https://github.com/user-attachments/assets/bc94e815-b05c-41ac-969f-a12c4e511832" />
+</p>
+
+<p align="center">
+  <img width="100%" alt="Nutrición FitTrack ES" src="https://github.com/user-attachments/assets/f1d68a01-73d1-4bfd-a1e2-571f0134bb6d" />
 </p>
 
 ---
