@@ -134,7 +134,6 @@ export function NutritionPage() {
                 onClick={() => setExpandedMeal(isExpanded ? null : mealType)}
                 className="w-full flex items-center gap-3 p-4 hover:bg-white/3 transition-colors"
               >
-                <span className="text-xl">{getMealIcon(mealType)}</span>
                 <div className="flex-1 text-left">
                   <p className="text-white font-medium text-sm">{getMealLabel(mealType)}</p>
                   <p className="text-slate-500 text-xs">{mealItems.length} alimentos · {Math.round(mealCals)} kcal</p>
