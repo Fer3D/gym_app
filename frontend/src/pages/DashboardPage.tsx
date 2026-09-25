@@ -16,6 +16,7 @@ export function DashboardPage() {
   const { data: profile } = useQuery({
     queryKey: ['user-profile'],
     queryFn: () => userApi.getProfile().then((r) => r.data),
+    staleTime: 30_000,
   });
 
   const { data: todayNutrition, isLoading: loadingNutrition } = useQuery({
@@ -38,7 +39,7 @@ export function DashboardPage() {
     queryFn: () => userApi.getTDEE().then((r) => r.data),
   });
 
-  const calorieGoal = profile?.calorieGoal || 2000;
+  const calorieGoal = Math.max(800, profile?.calorieGoal || 2000);
   const totals = todayNutrition?.totals || { calories: 0, proteins: 0, carbs: 0, fats: 0 };
   const remaining = Math.max(0, calorieGoal - totals.calories);
 
@@ -54,7 +55,7 @@ export function DashboardPage() {
       animate={{ opacity: 1 }}
       className="space-y-6"
     >
-      {/* Header */}
+
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">
@@ -73,9 +74,8 @@ export function DashboardPage() {
         </Link>
       </div>
 
-      {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Macro Ring */}
+
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -100,7 +100,6 @@ export function DashboardPage() {
           )}
         </motion.div>
 
-        {/* Stats column */}
         <div className="lg:col-span-2 grid grid-cols-2 gap-3">
           <StatsCard
             title="Calorías hoy"
@@ -110,7 +109,7 @@ export function DashboardPage() {
             color="indigo"
           />
           <StatsCard
-            title="Remaining"
+            title="Restantes"
             value={`${Math.round(remaining)} kcal`}
             subtitle="Por consumir"
             icon="🎯"
@@ -119,7 +118,7 @@ export function DashboardPage() {
           <StatsCard
             title="Proteínas"
             value={`${Math.round(totals.proteins)}g`}
-            subtitle={`Obj: ${profile?.proteinGoal || 150}g`}
+            subtitle={`Obj: ${Math.max(20, profile?.proteinGoal || 150)}g`}
             icon="💪"
             color="purple"
           />
@@ -133,7 +132,6 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Gráfica semanal */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -167,7 +165,6 @@ export function DashboardPage() {
         </ResponsiveContainer>
       </motion.div>
 
-      {/* Quick links */}
       <div className="grid grid-cols-2 gap-3">
         <Link to="/nutricion">
           <motion.div
@@ -205,7 +202,6 @@ export function DashboardPage() {
         </Link>
       </div>
 
-      {/* TDEE info */}
       {tdee && tdee.tdee > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}

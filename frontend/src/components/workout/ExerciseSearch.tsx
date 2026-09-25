@@ -62,7 +62,7 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Search */}
+
       <div className="p-4 pb-2 space-y-3">
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -81,7 +81,6 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
           )}
         </div>
 
-        {/* Category filter */}
         {!debouncedQ && (
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             <button
@@ -104,7 +103,6 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
         )}
       </div>
 
-      {/* Results */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
         {isLoading && <div className="flex justify-center py-8"><Spinner /></div>}
         <AnimatePresence>
@@ -117,7 +115,7 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
               onClick={() => onSelect(ex)}
               className="w-full flex items-center gap-3 p-3 bg-white/3 hover:bg-white/8 rounded-xl border border-white/5 hover:border-indigo-500/30 transition-all text-left"
             >
-              {/* Category icon */}
+
               <div className="w-10 h-10 bg-indigo-900/30 rounded-lg flex items-center justify-center flex-shrink-0 text-lg">
                 {CATEGORY_ICONS[ex.category] || '🏋️'}
               </div>
@@ -141,7 +139,6 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
           ))}
         </AnimatePresence>
 
-        {/* Pagination */}
         {!debouncedQ && data?.pages && data.pages > 1 && (
           <div className="flex items-center gap-2 pt-2 justify-center">
             <button

@@ -1,8 +1,3 @@
-/**
- * Caché in-memory con TTL (Time To Live).
- * Sin dependencias externas, suficiente para una app single-user.
- */
-
 interface CacheEntry<T> {
   data: T;
   expiresAt: number;
@@ -14,7 +9,7 @@ class TTLCache<T = unknown> {
 
   constructor(defaultTTLms: number) {
     this.defaultTTL = defaultTTLms;
-    // Limpieza periódica cada 5 minutos
+
     setInterval(() => this.evict(), 5 * 60 * 1000);
   }
 
@@ -43,7 +38,6 @@ class TTLCache<T = unknown> {
     this.store.delete(key);
   }
 
-  /** Elimina todas las entradas cuya clave empiece por prefijo */
   deleteByPrefix(prefix: string): number {
     let count = 0;
     for (const key of this.store.keys()) {
@@ -55,7 +49,6 @@ class TTLCache<T = unknown> {
     return count;
   }
 
-  /** Retorna el tiempo restante en segundos (0 si no existe o expiró) */
   ttlSeconds(key: string): number {
     const entry = this.store.get(key);
     if (!entry || Date.now() > entry.expiresAt) return 0;
@@ -78,6 +71,5 @@ class TTLCache<T = unknown> {
   }
 }
 
-// 30 min para alimentos, 24h para ejercicios
 export const foodCache = new TTLCache<unknown[]>(30 * 60 * 1000);
 export const exerciseCache = new TTLCache<unknown[]>(24 * 60 * 60 * 1000);

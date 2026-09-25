@@ -6,14 +6,13 @@ export const exerciseRouter = Router();
 
 const WGER_BASE = 'https://wger.de/api/v2';
 
-// Buscar ejercicios en WGER (API gratuita y en español)
 exerciseRouter.get('/search', async (req: Request, res: Response) => {
   try {
     const { q, category, muscle, equipment, page = 1 } = req.query;
 
     const params: any = {
       format: 'json',
-      language: 2, // 2 = inglés, 4 = alemán. Busco en inglés y en español
+      language: 2,
       limit: 50,
       offset: (parseInt(page as string) - 1) * 50,
     };
@@ -27,7 +26,7 @@ exerciseRouter.get('/search', async (req: Request, res: Response) => {
       url = `${WGER_BASE}/exercise/search/?term=${encodeURIComponent(q as string)}&language=es&format=json&language=es`;
       const searchResponse = await axios.get(url, { timeout: 8000 });
       const suggestions = searchResponse.data?.suggestions || [];
-      // Las suggestions tienen { value: "nombre", data: { id, category, ... } }
+
       const exercises = suggestions.slice(0, 30).map((s: any) => ({
         id: s.data?.id ?? s.id,
         name: s.value || s.data?.name || `Ejercicio`,
@@ -42,8 +41,7 @@ exerciseRouter.get('/search', async (req: Request, res: Response) => {
     }
 
     const response = await axios.get(url, { params, timeout: 8000 });
-    
-    // Obtener traducciones en español e inglés para cada ejercicio
+
     const exercisesWithInfo = await Promise.all(
       (response.data.results || []).map(async (ex: any) => {
         try {
@@ -62,7 +60,6 @@ exerciseRouter.get('/search', async (req: Request, res: Response) => {
   }
 });
 
-// Obtener todos los ejercicios con info completa (paginado)
 exerciseRouter.get('/list', async (req: Request, res: Response) => {
   try {
     const { page = 1, category, muscle, equipment } = req.query;
@@ -93,7 +90,6 @@ exerciseRouter.get('/list', async (req: Request, res: Response) => {
   }
 });
 
-// Obtener ejercicio por ID
 exerciseRouter.get('/:id', async (req: Request, res: Response) => {
   try {
     const response = await axios.get(`${WGER_BASE}/exerciseinfo/${req.params.id}/?format=json`, { timeout: 8000 });
@@ -103,7 +99,6 @@ exerciseRouter.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Obtener categorías musculares
 exerciseRouter.get('/meta/categories', async (_req: Request, res: Response) => {
   try {
     const response = await axios.get(`${WGER_BASE}/exercisecategory/?format=json&limit=100`, { timeout: 8000 });
@@ -113,7 +108,6 @@ exerciseRouter.get('/meta/categories', async (_req: Request, res: Response) => {
   }
 });
 
-// Obtener músculos
 exerciseRouter.get('/meta/muscles', async (_req: Request, res: Response) => {
   try {
     const response = await axios.get(`${WGER_BASE}/muscle/?format=json&limit=100`, { timeout: 8000 });
@@ -123,7 +117,6 @@ exerciseRouter.get('/meta/muscles', async (_req: Request, res: Response) => {
   }
 });
 
-// Obtener equipamiento
 exerciseRouter.get('/meta/equipment', async (_req: Request, res: Response) => {
   try {
     const response = await axios.get(`${WGER_BASE}/equipment/?format=json&limit=100`, { timeout: 8000 });
@@ -135,15 +128,14 @@ exerciseRouter.get('/meta/equipment', async (_req: Request, res: Response) => {
 
 function formatExercise(data: any) {
   if (!data) return null;
-  
-  // Buscar traducción en español primero, luego inglés
+
   const translations = data.translations || [];
-  const esTranslation = translations.find((t: any) => t.language === 4); // Español
-  const enTranslation = translations.find((t: any) => t.language === 2); // Inglés
+  const esTranslation = translations.find((t: any) => t.language === 4);
+  const enTranslation = translations.find((t: any) => t.language === 2);
   const translation = esTranslation || enTranslation || translations[0] || {};
-  
+
   const name = translation.name || data.name || `Ejercicio ${data.id}`;
-  
+
   return {
     id: data.id,
     name,

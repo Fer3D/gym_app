@@ -105,7 +105,7 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
               animate={{ opacity: 1, y: 0 }}
               className="glass border border-white/5 rounded-2xl overflow-hidden"
             >
-              {/* Card header */}
+
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -129,7 +129,6 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
                   </div>
                 </div>
 
-                {/* Acciones */}
                 <div className="flex gap-2 mt-3">
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : rid)}
@@ -165,7 +164,6 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
                 </div>
               </div>
 
-              {/* Exercises preview */}
               <AnimatePresence>
                 {isExpanded && (
                   <motion.div
@@ -203,7 +201,6 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
         })}
       </div>
 
-      {/* Day selector modal */}
       <AnimatePresence>
         {startingRoutine && (
           <motion.div

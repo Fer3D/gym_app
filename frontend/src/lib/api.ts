@@ -6,7 +6,6 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// ─── Alimentos ─────────────────────────────────────────────────────────────
 export const foodApi = {
   search: (q: string, page = 1) => api.get('/foods/search', { params: { q, page } }),
   barcode: (code: string) => api.get(`/foods/barcode/${code}`),
@@ -16,7 +15,6 @@ export const foodApi = {
   deleteCustom: (id: number) => api.delete(`/foods/custom/${id}`),
 };
 
-// ─── Ejercicios ────────────────────────────────────────────────────────────
 export const exerciseApi = {
   search: (q: string, filters?: any) => api.get('/exercises/search', { params: { q, ...filters } }),
   list: (page = 1, filters?: any) => api.get('/exercises/list', { params: { page, ...filters } }),
@@ -26,7 +24,6 @@ export const exerciseApi = {
   equipment: () => api.get('/exercises/meta/equipment'),
 };
 
-// ─── Nutrición ─────────────────────────────────────────────────────────────
 export const nutritionApi = {
   getDay: (date: string) => api.get(`/nutrition/day/${date}`),
   addMeal: (date: string, data: any) => api.post(`/nutrition/day/${date}/meal`, data),
@@ -37,7 +34,6 @@ export const nutritionApi = {
   monthlyStats: (year: number, month: number) => api.get(`/nutrition/stats/monthly/${year}/${month}`),
 };
 
-// ─── Entrenamientos ────────────────────────────────────────────────────────
 export const workoutApi = {
   getDay: (date: string) => api.get(`/workouts/day/${date}`),
   create: (date: string, data: any) => api.post(`/workouts/day/${date}`, data),
@@ -52,14 +48,12 @@ export const workoutApi = {
   weeklyStats: (startDate: string) => api.get(`/workouts/stats/weekly/${startDate}`),
 };
 
-// ─── Usuario ───────────────────────────────────────────────────────────────
 export const userApi = {
   getProfile: () => api.get('/user/profile'),
   updateProfile: (data: any) => api.put('/user/profile', data),
   getTDEE: () => api.get('/user/tdee'),
 };
 
-// ─── Rutinas ──────────────────────────────────────────────────────────────
 export const routineApi = {
   getAll: () => api.get('/routines'),
   save: (data: any) => api.post('/routines', data),
@@ -70,7 +64,6 @@ export const routineApi = {
   startFromExplore: (id: string, date: string, dayIndex = 0) => api.post(`/routines/explore/${id}/start`, { date, dayIndex }),
 };
 
-// ─── Calendario ────────────────────────────────────────────────────────────
 export const calendarApi = {
   summary: (year: number, month: number) => api.get(`/calendar/summary/${year}/${month}`),
   day: (date: string) => api.get(`/calendar/day/${date}`),

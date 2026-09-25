@@ -21,15 +21,15 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
   const [selected, setSelected] = useState<FoodProduct | null>(null);
   const [quantity, setQuantity] = useState(100);
 
-  // Estado de búsqueda SSE
   const [products, setProducts] = useState<FoodProduct[]>([]);
   const [searchState, setSearchState] = useState<SearchState>('idle');
   const [wasCached, setWasCached] = useState(false);
   const [cacheTTL, setCacheTTL] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const esRef = useRef<EventSource | null>(null);
+  const finishedRef = useRef(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(query), 450);
@@ -38,38 +38,74 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  // ── Alimentos populares (fallback cuando no hay búsqueda) ─────────────────
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   const { data: popular } = useQuery({
     queryKey: ['food-popular'],
     queryFn: () => foodApi.popular().then((r) => r.data),
     staleTime: 30 * 60 * 1000,
+    retry: 1,
   });
 
-  // ── Búsqueda SSE ──────────────────────────────────────────────────────────
   const startSearch = useCallback((q: string, force = false) => {
     if (esRef.current) esRef.current.close();
     setProducts([]);
     setSearchState('loading');
     setWasCached(false);
+    setErrorMsg(null);
+    finishedRef.current = false;
 
     const url = `/api/foods/search/stream?q=${encodeURIComponent(q)}${force ? '&force=true' : ''}`;
     const es = new EventSource(url);
     esRef.current = es;
 
     es.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      if (data.error) { setSearchState('error'); es.close(); return; }
+      try {
+        const data = JSON.parse(e.data);
+        if (data.error) {
+          finishedRef.current = true;
+          setErrorMsg(String(data.error));
+          setSearchState('error');
+          es.close();
+          return;
+        }
 
-      setProducts((prev) => [...prev, ...(data.products || [])]);
-      setWasCached(data.cached ?? false);
-      setCacheTTL(data.ttlSeconds ?? 0);
-      setTotalCount(data.total ?? 0);
-      setSearchState(data.cached ? 'done' : 'streaming');
+        setProducts((prev) => [...prev, ...(data.products || [])]);
+        setWasCached(data.cached ?? false);
+        setCacheTTL(data.ttlSeconds ?? 0);
+        if (data.degraded && data.message) setErrorMsg(String(data.message));
+        setSearchState(data.cached ? 'done' : 'streaming');
 
-      if (data.done) { setSearchState('done'); es.close(); }
+        if (data.done) {
+          finishedRef.current = true;
+          setSearchState('done');
+          es.close();
+        }
+      } catch {
+        finishedRef.current = true;
+        setErrorMsg('Respuesta inválida del servidor');
+        setSearchState('error');
+        es.close();
+      }
     };
 
-    es.onerror = () => { setSearchState('error'); es.close(); };
+    es.onerror = () => {
+
+      if (finishedRef.current) {
+        es.close();
+        return;
+      }
+      finishedRef.current = true;
+      setErrorMsg('Open Food Facts no disponible. Reintenta.');
+      setSearchState('error');
+      es.close();
+    };
   }, []);
 
   useEffect(() => {
@@ -93,7 +129,6 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
   const macros = selected ? calcMacrosFromPer100g(selected.per100g, quantity) : null;
   const isSearching = searchState === 'loading' || searchState === 'streaming';
 
-  // ── Vista detalle de producto ─────────────────────────────────────────────
   if (selected) {
     return (
       <div className="p-4 space-y-4">
@@ -175,10 +210,9 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
     );
   }
 
-  // ── Vista listado ─────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full">
-      {/* Barra de búsqueda */}
+
       <div className="p-4 pb-2 space-y-2">
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -197,7 +231,7 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
               </button>
             )}
           </div>
-          {/* Botón refresco de caché */}
+
           {debouncedQ.length > 1 && (
             <button
               onClick={() => startSearch(debouncedQ, true)}
@@ -210,7 +244,6 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
           )}
         </div>
 
-        {/* Indicador de estado */}
         {debouncedQ.length > 1 && (
           <div className="flex items-center justify-between text-[11px] px-0.5">
             <span className="flex items-center gap-1 text-slate-500">
@@ -220,22 +253,26 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
               )}
               {searchState === 'done' && wasCached && (
                 <><Zap size={11} className="text-green-400" />
-                <span className="text-green-400">Resultado instantáneo</span>
+                <span className="text-green-400">España · popularidad</span>
                 {cacheTTL > 0 && <><Clock size={10} className="text-slate-600 ml-1" /><span className="text-slate-600">{Math.round(cacheTTL / 60)}min</span></>}</>
               )}
               {searchState === 'done' && !wasCached && products.length > 0 && (
-                <span className="text-slate-500">{products.length} resultados</span>
+                <span className="text-slate-500">{products.length} súper España · popularidad</span>
               )}
-              {searchState === 'error' && <span className="text-red-400">Error al buscar</span>}
+              {searchState === 'error' && <span className="text-red-400">{errorMsg || 'Error al buscar'}</span>}
+              {searchState === 'done' && errorMsg && !wasCached && (
+                <span className="text-amber-400">{errorMsg}</span>
+              )}
             </span>
-            {searchState === 'done' && wasCached && (
+            {(searchState === 'done' && wasCached) || searchState === 'error' ? (
               <button
+                type="button"
                 onClick={() => startSearch(debouncedQ, true)}
                 className="text-indigo-500 hover:text-indigo-400 transition-colors"
               >
-                Actualizar
+                {searchState === 'error' ? 'Reintentar' : 'Actualizar'}
               </button>
-            )}
+            ) : null}
           </div>
         )}
         {!debouncedQ && (
@@ -243,9 +280,8 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
         )}
       </div>
 
-      {/* Lista de resultados */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
-        {/* Skeleton mientras carga los primeros resultados */}
+
         {searchState === 'loading' && products.length === 0 && (
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
@@ -264,7 +300,6 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
           </div>
         )}
 
-        {/* Sin resultados */}
         {searchState === 'done' && products.length === 0 && debouncedQ.length > 1 && (
           <div className="text-center py-8">
             <p className="text-slate-400 text-sm">No se encontraron resultados para "{debouncedQ}"</p>
@@ -301,7 +336,6 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
           ))}
         </AnimatePresence>
 
-        {/* Spinner al final si aún viene más info */}
         {searchState === 'streaming' && products.length > 0 && (
           <div className="flex justify-center py-3">
             <Spinner size={18} />

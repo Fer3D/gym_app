@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft, ChevronRight, Plus, Trash2, Check, X,
   Dumbbell as DumbbellIcon, Zap, BookOpen, Compass, Play,
-  ChevronDown, ChevronUp, Pencil, MoreVertical,
+  ChevronDown, ChevronUp, Pencil,
 } from 'lucide-react';
 import { workoutApi, routineApi } from '../lib/api';
 import type { Exercise, WorkoutLog, ExerciseLog, Routine } from '../lib/utils';
@@ -25,10 +25,9 @@ export function WorkoutPage() {
   const [selectedDate, setSelectedDate] = useState(todayString());
   const [showExerciseSearch, setShowExerciseSearch] = useState(false);
   const [activeWorkoutId, setActiveWorkoutId] = useState<number | null>(null);
-  // Rutina guardada a iniciar (para selector de día)
+
   const [startingRoutine, setStartingRoutine] = useState<Routine | null>(null);
 
-  // ── Entrenamientos del día ──────────────────────────────────────────────
   const { data: workouts = [], isLoading } = useQuery({
     queryKey: ['workout-day', selectedDate],
     queryFn: () => workoutApi.getDay(selectedDate).then((r) => r.data),
@@ -83,7 +82,6 @@ export function WorkoutPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['workout-day', selectedDate] }),
   });
 
-  // ── Rutinas guardadas ────────────────────────────────────────────────────
   const { data: savedRoutines = [] } = useQuery<Routine[]>({
     queryKey: ['routines'],
     queryFn: () => routineApi.getAll().then((r) => r.data),
@@ -105,7 +103,6 @@ export function WorkoutPage() {
     },
   });
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
   const goToDay = (delta: number) => {
     const d = parseISO(selectedDate);
     setSelectedDate(dateToString(addDays(d, delta)));
@@ -120,10 +117,9 @@ export function WorkoutPage() {
     setMainTab('today');
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
-      {/* Header */}
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Entrenamiento</h1>
         {mainTab === 'today' && (workouts as WorkoutLog[]).length === 0 && !isLoading && selectedDate === todayString() && (
@@ -137,7 +133,6 @@ export function WorkoutPage() {
         )}
       </div>
 
-      {/* Main tabs */}
       <div className="flex gap-1 p-1 glass border border-white/5 rounded-2xl">
         {([['today', '🏋️ Hoy'], ['routines', '📋 Rutinas']] as [MainTab, string][]).map(([tab, label]) => (
           <button
@@ -152,10 +147,9 @@ export function WorkoutPage() {
         ))}
       </div>
 
-      {/* ── TAB: HOY ────────────────────────────────────────────────────── */}
       {mainTab === 'today' && (
         <div className="space-y-4">
-          {/* Date nav */}
+
           <div className="flex items-center gap-3 glass border border-indigo-500/10 rounded-2xl px-4 py-3">
             <button onClick={() => goToDay(-1)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white">
               <ChevronLeft size={18} />
@@ -173,7 +167,6 @@ export function WorkoutPage() {
             </button>
           </div>
 
-          {/* Workout tabs (múltiples entrenamientos en el mismo día) */}
           {(workouts as WorkoutLog[]).length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-1">
               {(workouts as WorkoutLog[]).map((w) => (
@@ -193,7 +186,7 @@ export function WorkoutPage() {
           {isLoading ? (
             <div className="flex justify-center py-12"><Spinner size={36} /></div>
           ) : !activeWorkout ? (
-            /* Hub de inicio */
+
             <WorkoutHub
               date={selectedDate}
               onEmpty={() => createWorkoutMutation.mutate('Entrenamiento libre')}
@@ -204,7 +197,7 @@ export function WorkoutPage() {
               isCreating={createWorkoutMutation.isPending}
             />
           ) : (
-            /* Entrenamiento activo */
+
             <div className="space-y-4">
               <div className="glass border border-indigo-500/10 rounded-2xl p-4 flex items-center justify-between">
                 <div>
@@ -259,7 +252,6 @@ export function WorkoutPage() {
         </div>
       )}
 
-      {/* ── TAB: RUTINAS ─────────────────────────────────────────────────── */}
       {mainTab === 'routines' && (
         <div className="space-y-4">
           {routinesSubView === 'create' ? (
@@ -273,10 +265,9 @@ export function WorkoutPage() {
               onClose={() => setRoutinesSubView('list')}
             />
           ) : (
-            /* Lista de rutinas guardadas */
+
             <SavedRoutinesList
               routines={savedRoutines as Routine[]}
-              date={selectedDate}
               onCreate={() => setRoutinesSubView('create')}
               onExplore={() => setRoutinesSubView('explore')}
               onDelete={(id) => deleteRoutineMutation.mutate(id as number)}
@@ -291,7 +282,6 @@ export function WorkoutPage() {
         </div>
       )}
 
-      {/* Exercise search modal */}
       <AnimatePresence>
         {showExerciseSearch && (
           <Modal title="Añadir ejercicio" onClose={() => setShowExerciseSearch(false)}>
@@ -304,7 +294,6 @@ export function WorkoutPage() {
         )}
       </AnimatePresence>
 
-      {/* Day selector for saved routine */}
       <AnimatePresence>
         {startingRoutine && (
           <motion.div
@@ -355,7 +344,6 @@ export function WorkoutPage() {
   );
 }
 
-// ── Hub de inicio ──────────────────────────────────────────────────────────
 function WorkoutHub({
   date, onEmpty, onCreateRoutine, onExplore, onUseSaved, hasSavedRoutines, isCreating,
 }: {
@@ -378,7 +366,7 @@ function WorkoutHub({
         <>
           <p className="text-slate-400 text-sm text-center">¿Cómo quieres entrenar hoy?</p>
           <div className="grid gap-3">
-            {/* Vacío */}
+
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={onEmpty}
@@ -396,7 +384,6 @@ function WorkoutHub({
               </div>
             </motion.button>
 
-            {/* Rutinas guardadas */}
             {hasSavedRoutines && (
               <motion.button
                 whileTap={{ scale: 0.98 }}
@@ -415,7 +402,6 @@ function WorkoutHub({
               </motion.button>
             )}
 
-            {/* Crear rutina */}
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={onCreateRoutine}
@@ -432,7 +418,6 @@ function WorkoutHub({
               </div>
             </motion.button>
 
-            {/* Explorar */}
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={onExplore}
@@ -455,12 +440,10 @@ function WorkoutHub({
   );
 }
 
-// ── Lista de rutinas guardadas ─────────────────────────────────────────────
 function SavedRoutinesList({
-  routines, date, onCreate, onExplore, onDelete, onStart, isDeleting,
+  routines, onCreate, onExplore, onDelete, onStart, isDeleting,
 }: {
   routines: Routine[];
-  date: string;
   onCreate: () => void;
   onExplore: () => void;
   onDelete: (id: number | string) => void;
@@ -471,7 +454,7 @@ function SavedRoutinesList({
 
   return (
     <div className="space-y-4">
-      {/* Actions */}
+
       <div className="flex gap-2">
         <button
           onClick={onCreate}
@@ -590,7 +573,6 @@ function SavedRoutinesList({
   );
 }
 
-// ── Exercise card with sets ────────────────────────────────────────────────
 function ExerciseCard({ exercise, onAddSet, onUpdateSet, onDeleteSet, onDelete }: {
   exercise: ExerciseLog;
   onAddSet: (data: any) => void;
@@ -614,7 +596,7 @@ function ExerciseCard({ exercise, onAddSet, onUpdateSet, onDeleteSet, onDelete }
       animate={{ opacity: 1, y: 0 }}
       className="glass border border-white/5 rounded-2xl overflow-hidden"
     >
-      {/* Header */}
+
       <div className="flex items-center gap-3 p-4">
         <div className="w-9 h-9 bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
           <DumbbellIcon size={18} className="text-purple-400" />
@@ -631,10 +613,9 @@ function ExerciseCard({ exercise, onAddSet, onUpdateSet, onDeleteSet, onDelete }
         </button>
       </div>
 
-      {/* Sets */}
       {!collapsed && (
         <div className="px-4 pb-4 space-y-2 border-t border-white/5 pt-3">
-          {/* Header row */}
+
           <div className="grid grid-cols-12 gap-2 text-[10px] text-slate-500 px-1 uppercase tracking-wide">
             <span className="col-span-1">#</span>
             <span className="col-span-4">Peso (kg)</span>
@@ -643,7 +624,6 @@ function ExerciseCard({ exercise, onAddSet, onUpdateSet, onDeleteSet, onDelete }
             <span className="col-span-1"></span>
           </div>
 
-          {/* Set rows */}
           {(exercise.sets || []).map((set) => (
             <SetRow
               key={set.id}
@@ -653,7 +633,6 @@ function ExerciseCard({ exercise, onAddSet, onUpdateSet, onDeleteSet, onDelete }
             />
           ))}
 
-          {/* Add set button */}
           <button
             onClick={() => onAddSet({ setNumber: nextSet, reps: defaultReps, weight: defaultWeight })}
             className="w-full py-2 rounded-xl border border-dashed border-white/10 text-slate-500 hover:text-indigo-400 hover:border-indigo-500/30 text-xs transition-colors flex items-center justify-center gap-1"

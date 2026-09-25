@@ -23,7 +23,7 @@ export function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 h-full w-16 md:w-60 flex flex-col z-50 glass border-r border-indigo-500/10">
-      {/* Logo */}
+
       <div className="flex items-center gap-3 px-4 py-5 border-b border-indigo-500/10">
         <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
           <Zap size={18} className="text-white" />
@@ -34,12 +34,11 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-2 py-4 space-y-1">
         {navItems.map(({ to, label, icon: Icon }) => {
           const isActive = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
           return (
-            <NavLink key={to} to={to}>
+            <NavLink key={to} to={to} end={to === '/'}>
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -64,7 +63,6 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer */}
       <div className="px-4 py-4 border-t border-indigo-500/10 hidden md:block">
         <p className="text-slate-600 text-[10px] text-center">FitTrack ES v1.0</p>
       </div>

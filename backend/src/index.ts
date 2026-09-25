@@ -16,7 +16,6 @@ app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174'], crede
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rutas
 app.use('/api/foods', foodRouter);
 app.use('/api/exercises', exerciseRouter);
 app.use('/api/nutrition', nutritionRouter);

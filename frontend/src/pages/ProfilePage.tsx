@@ -50,15 +50,15 @@ export function ProfilePage() {
     if (profile) {
       setForm({
         name: profile.name || '',
-        weight: profile.weight ?? '',
-        height: profile.height ?? '',
+        weight: profile.weight != null ? String(profile.weight) : '',
+        height: profile.height != null ? String(profile.height) : '',
         birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : '',
         gender: profile.gender || 'no_especificado',
         objective: profile.objective || 'mantener',
-        calorieGoal: profile.calorieGoal ?? 2000,
-        proteinGoal: profile.proteinGoal ?? 150,
-        carbsGoal: profile.carbsGoal ?? 250,
-        fatsGoal: profile.fatsGoal ?? 65,
+        calorieGoal: String(profile.calorieGoal ?? 2000),
+        proteinGoal: String(profile.proteinGoal ?? 150),
+        carbsGoal: String(profile.carbsGoal ?? 250),
+        fatsGoal: String(profile.fatsGoal ?? 65),
       });
     }
   }, [profile]);
@@ -68,6 +68,7 @@ export function ProfilePage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['user-profile'] });
       qc.invalidateQueries({ queryKey: ['tdee'] });
+      qc.invalidateQueries({ queryKey: ['calendar'] });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     },
@@ -95,10 +96,10 @@ export function ProfilePage() {
       const carbCals = cals - proteinCals - fatCals;
       setForm((f) => ({
         ...f,
-        calorieGoal: cals,
-        proteinGoal: protein,
-        carbsGoal: Math.round(carbCals / 4),
-        fatsGoal: Math.round(fatCals / 9),
+        calorieGoal: String(cals),
+        proteinGoal: String(protein),
+        carbsGoal: String(Math.round(carbCals / 4)),
+        fatsGoal: String(Math.round(fatCals / 9)),
       }));
     }
   };
@@ -123,14 +124,12 @@ export function ProfilePage() {
         </motion.button>
       </div>
 
-      {/* Personal info */}
       <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <User size={16} className="text-indigo-400" />
           <h2 className="text-white font-semibold text-sm">Información Personal</h2>
         </div>
 
-        {/* Avatar / Name */}
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-2xl font-bold text-white">
             {(form.name || 'U')[0].toUpperCase()}
@@ -147,7 +146,6 @@ export function ProfilePage() {
           </div>
         </div>
 
-        {/* Gender */}
         <div>
           <label className="text-slate-400 text-xs mb-2 block">Sexo biológico (para calcular TDEE)</label>
           <div className="flex gap-2">
@@ -165,7 +163,6 @@ export function ProfilePage() {
           </div>
         </div>
 
-        {/* Measurements */}
         <div className="grid grid-cols-3 gap-3">
           <div>
             <label className="text-slate-400 text-xs mb-1 flex items-center gap-1">
@@ -193,10 +190,11 @@ export function ProfilePage() {
             />
           </div>
           <div>
-            <label className="text-slate-400 text-xs mb-1 flex items-center gap-1">
+            <label htmlFor="profile-birthDate" className="text-slate-400 text-xs mb-1 flex items-center gap-1">
               <Calendar size={12} /> Nacimiento
             </label>
             <input
+              id="profile-birthDate"
               type="date"
               value={form.birthDate}
               onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value }))}
@@ -206,7 +204,6 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* Objective */}
       <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-3">
         <div className="flex items-center gap-2 mb-2">
           <Target size={16} className="text-indigo-400" />
@@ -236,7 +233,6 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* TDEE Display */}
       {tdee && tdee.tdee > 0 && (
         <div className="glass border border-green-500/10 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
@@ -265,7 +261,6 @@ export function ProfilePage() {
         </div>
       )}
 
-      {/* Goals */}
       <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Target size={16} className="text-indigo-400" />

@@ -3,7 +3,6 @@ import { prisma } from '../lib/prisma';
 
 export const routineRouter = Router();
 
-// ─── Rutinas curadas (explorar) ─────────────────────────────────────────────
 const EXPLORE_ROUTINES = [
   {
     id: 'ppl',
@@ -288,19 +287,16 @@ const EXPLORE_ROUTINES = [
   },
 ];
 
-// ─── GET /explore — rutinas curadas ─────────────────────────────────────────
 routineRouter.get('/explore', (_req: Request, res: Response) => {
   return res.json(EXPLORE_ROUTINES);
 });
 
-// ─── GET /explore/:id — rutina curada por id ─────────────────────────────────
 routineRouter.get('/explore/:id', (req: Request, res: Response) => {
   const routine = EXPLORE_ROUTINES.find((r) => r.id === String(req.params.id));
   if (!routine) return res.status(404).json({ error: 'Rutina no encontrada' });
   return res.json(routine);
 });
 
-// ─── GET / — rutinas guardadas del usuario ──────────────────────────────────
 routineRouter.get('/', async (_req: Request, res: Response) => {
   const routines = await prisma.routine.findMany({
     where: { userId: 1 },
@@ -312,7 +308,6 @@ routineRouter.get('/', async (_req: Request, res: Response) => {
   })));
 });
 
-// ─── POST / — guardar rutina (propia o desde explorar) ──────────────────────
 routineRouter.post('/', async (req: Request, res: Response) => {
   try {
     const { name, description, level, daysPerWeek, days, source, sourceId } = req.body;
@@ -336,7 +331,6 @@ routineRouter.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// ─── PUT /:id — actualizar rutina del usuario ────────────────────────────────
 routineRouter.put('/:id', async (req: Request, res: Response) => {
   try {
     const { name, description, level, daysPerWeek, days } = req.body;
@@ -356,13 +350,17 @@ routineRouter.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// ─── DELETE /:id — eliminar rutina ──────────────────────────────────────────
 routineRouter.delete('/:id', async (req: Request, res: Response) => {
-  await prisma.routine.delete({ where: { id: parseInt(String(req.params.id)) } });
+  const id = parseInt(String(req.params.id), 10);
+  if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID inválido' });
+
+  const existing = await prisma.routine.findFirst({ where: { id, userId: 1 } });
+  if (!existing) return res.status(404).json({ error: 'Rutina no encontrada' });
+
+  await prisma.routine.delete({ where: { id } });
   return res.json({ success: true });
 });
 
-// ─── POST /:id/start — iniciar entrenamiento desde rutina ───────────────────
 routineRouter.post('/:id/start', async (req: Request, res: Response) => {
   try {
     const { date, dayIndex = 0 } = req.body;
@@ -377,7 +375,6 @@ routineRouter.post('/:id/start', async (req: Request, res: Response) => {
     const selectedDay = days[dayIndex] || days[0];
     if (!selectedDay) return res.status(400).json({ error: 'Día no encontrado en la rutina' });
 
-    // Crear el entrenamiento del día
     const workout = await prisma.workoutLog.create({
       data: {
         date: String(date),
@@ -388,7 +385,6 @@ routineRouter.post('/:id/start', async (req: Request, res: Response) => {
       include: { exerciseLogs: { include: { sets: true } } },
     });
 
-    // Crear los ejercicios (sin series, el usuario los registra)
     await Promise.all(
       (selectedDay.exercises || []).map((ex: any, i: number) =>
         prisma.exerciseLog.create({
@@ -404,7 +400,6 @@ routineRouter.post('/:id/start', async (req: Request, res: Response) => {
       )
     );
 
-    // Devolver el workout con ejercicios
     const result = await prisma.workoutLog.findUnique({
       where: { id: workout.id },
       include: { exerciseLogs: { include: { sets: true }, orderBy: { order: 'asc' } } },
@@ -416,7 +411,6 @@ routineRouter.post('/:id/start', async (req: Request, res: Response) => {
   }
 });
 
-// ─── POST /explore/:id/start — iniciar desde rutina curada ─────────────────
 routineRouter.post('/explore/:id/start', async (req: Request, res: Response) => {
   try {
     const { date, dayIndex = 0 } = req.body;

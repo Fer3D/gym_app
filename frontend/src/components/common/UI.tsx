@@ -28,12 +28,12 @@ export function MacroRing({ calories, goal, proteins, carbs, fats, size = 160 }:
     <div className="flex flex-col items-center gap-4">
       <div style={{ width: size, height: size }} className="relative">
         <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-          {/* Background ring */}
+
           <circle
             cx={size / 2} cy={size / 2} r={r}
             fill="none" stroke="rgba(99,102,241,0.1)" strokeWidth="10"
           />
-          {/* Progress ring */}
+
           <motion.circle
             cx={size / 2} cy={size / 2} r={r}
             fill="none" stroke={color} strokeWidth="10"
@@ -58,7 +58,6 @@ export function MacroRing({ calories, goal, proteins, carbs, fats, size = 160 }:
         </div>
       </div>
 
-      {/* Macro bars */}
       <div className="w-full space-y-2">
         <MacroBar label="Proteínas" value={Math.round(proteins)} pct={pPct} color="#6366f1" unit="g" />
         <MacroBar label="Carbos." value={Math.round(carbs)} pct={cPct} color="#06b6d4" unit="g" />
@@ -129,7 +128,6 @@ export function StatsCard({ title, value, subtitle, icon, color = 'indigo', clas
   );
 }
 
-// Spinner
 export function Spinner({ size = 24 }: { size?: number }) {
   return (
     <div
@@ -139,7 +137,6 @@ export function Spinner({ size = 24 }: { size?: number }) {
   );
 }
 
-// Empty state
 export function EmptyState({ icon, title, description }: { icon: string; title: string; description?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -150,7 +147,6 @@ export function EmptyState({ icon, title, description }: { icon: string; title: 
   );
 }
 
-// Modal wrapper
 export function Modal({ children, onClose, title }: {
   children: ReactNode; onClose: () => void; title: string;
 }) {

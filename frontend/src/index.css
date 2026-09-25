@@ -96,7 +96,6 @@
     @apply px-4 sm:px-6 lg:px-8;
   }
 
-  /* Temporary compat while redesign lands */
   .glass {
     background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     border: 1px solid var(--color-border-subtle);
@@ -118,7 +117,6 @@
   background: var(--color-fg-subtle);
 }
 
-/* FitTrack calendar grid */
 .ft-cal.react-calendar {
   width: 100% !important;
   background: transparent !important;

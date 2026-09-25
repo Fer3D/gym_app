@@ -75,7 +75,6 @@ export function getMealLabel(mealType: string) {
   return labels[mealType] || mealType;
 }
 
-/** @deprecated Prefer Lucide icons in UI — kept for transitional pages */
 export function getMealIcon(_mealType: string) {
   return '';
 }

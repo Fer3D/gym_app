@@ -77,7 +77,7 @@ describe('fechas', () => {
   });
 
   it('getWeekStart es lunes', () => {
-    // jueves 25 sep 2026 → lunes 21
+
     expect(getWeekStart(new Date(2026, 8, 25))).toBe('2026-09-21');
   });
 

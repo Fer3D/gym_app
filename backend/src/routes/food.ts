@@ -5,37 +5,234 @@ import { foodCache } from '../lib/cache';
 
 export const foodRouter = Router();
 
-const OFF_BASE = 'https://world.openfoodfacts.org';
-const BATCH_SIZE = 6; // cuántos productos enviar por lote SSE
+const OFF_HOSTS = [
+  'https://world.openfoodfacts.org',
+  'https://es.openfoodfacts.org',
+];
+const BATCH_SIZE = 6;
+const OFF_UA = 'FitTrackES/1.0 (fittrack.es)';
 
-/** Helper: envía un evento SSE */
+const OFF_FIELDS =
+  'code,product_name,product_name_es,brands,image_small_url,nutriments,serving_size,unique_scans_n,popularity_key,countries_tags,countries_tags_en,stores,stores_tags,lang,languages_tags';
+
+const ES_BRAND_RE =
+  /\b(hacendado|mercadona|dia|consum|eroski|alcampo|auchan|casa tarradellas|campofr[ií]o|gallina blanca|elpozo|maheso|anitin|carrefour|lidl|bovinos)\b/i;
+const ES_STORE_RE =
+  /\b(mercadona|dia|consum|eroski|alcampo|el corte|carrefour|lidl|bm\b|aldi|hipercor|supersol|caprabo)\b/i;
+const FOREIGN_BRAND_RE =
+  /\b(sodebo|picard|herta|croustipate|harrys|panzani|milbona|italpizza|deluxe|sch[aä]r)\b/i;
+
 function sendSSE(res: Response, data: unknown) {
   res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-// ─── Búsqueda progresiva vía Server-Sent Events ─────────────────────────────
-// El cliente recibe lotes de BATCH_SIZE productos mientras se van procesando.
-// Si el resultado está en caché, responde en <10ms.
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function productMatchesQuery(p: Record<string, unknown>, q: string): boolean {
+  const skip = new Set(['hacendado', 'mercadona', 'carrefour', 'dia', 'consum']);
+  const tokens = q
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .split(/[^a-z0-9áéíóúñü]+/i)
+    .map((t) => t.trim())
+    .filter((t) => t.length > 2 && !skip.has(t));
+  if (tokens.length === 0) return true;
+  const name = `${p.product_name_es || ''} ${p.product_name || ''} ${p.brands || ''}`
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+  return tokens.every((t) => name.includes(t));
+}
+
+function popularityScore(p: Record<string, unknown>): number {
+  const scans = Number(p.unique_scans_n);
+  if (Number.isFinite(scans) && scans > 0) return scans;
+  const key = Number(p.popularity_key);
+  if (Number.isFinite(key) && key > 0) return key % 1e6;
+  return 0;
+}
+
+function countryList(p: Record<string, unknown>): string[] {
+  const en = Array.isArray(p.countries_tags_en)
+    ? p.countries_tags_en.map((c) => String(c).toLowerCase())
+    : [];
+  if (en.length) return en;
+  const tags = Array.isArray(p.countries_tags)
+    ? p.countries_tags.map((c) => String(c).toLowerCase())
+    : [];
+  return tags.map((t) => t.replace(/^en:/, '').replace(/^es:/, ''));
+}
+
+function isSpainProduct(p: Record<string, unknown>): boolean {
+  const countries = countryList(p);
+  return countries.some((c) => c === 'spain' || c === 'espana' || c === 'españa');
+}
+
+function spainRetailScore(p: Record<string, unknown>): number {
+  if (!isSpainProduct(p)) return -1;
+
+  const brands = String(p.brands || '');
+  const stores = String(p.stores || '');
+  const storeTags = Array.isArray(p.stores_tags) ? p.stores_tags.join(' ') : '';
+  const storeBlob = `${stores} ${storeTags}`;
+  const countries = countryList(p);
+  const pop = Math.max(popularityScore(p), 1);
+
+  let mult = 1;
+
+  if (countries.length === 1) mult *= 12;
+  else if (countries.length <= 3) mult *= 4;
+  else if (countries.length <= 6) mult *= 1.5;
+  else mult *= 0.6;
+
+  if (ES_BRAND_RE.test(brands)) mult *= 8;
+  if (/hacendado/i.test(brands)) mult *= 2;
+  if (ES_STORE_RE.test(storeBlob)) mult *= 6;
+  if (/mercadona/i.test(storeBlob)) mult *= 2;
+
+  if (p.product_name_es) mult *= 1.8;
+  const langs = Array.isArray(p.languages_tags) ? p.languages_tags.map(String) : [];
+  if (langs.some((l) => l === 'es' || l === 'es:spanish' || l.endsWith(':es'))) mult *= 1.4;
+
+  if (FOREIGN_BRAND_RE.test(brands)) {
+    const onlyEsRetail = ES_BRAND_RE.test(brands) || /mercadona/i.test(storeBlob);
+    if (!onlyEsRetail) mult *= 0.08;
+  }
+
+  return pop * mult;
+}
+
+async function offCgiSearch(
+  params: Record<string, string | number>,
+): Promise<Record<string, unknown>[]> {
+  let lastError: unknown;
+  for (const host of OFF_HOSTS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await axios.get(`${host}/cgi/search.pl`, {
+          params,
+          headers: { 'User-Agent': OFF_UA },
+          timeout: 15000,
+          validateStatus: (s) => s >= 200 && s < 300,
+        });
+        return (response.data.products || []) as Record<string, unknown>[];
+      } catch (err) {
+        lastError = err;
+        await sleep(400 * (attempt + 1));
+      }
+    }
+  }
+  throw lastError;
+}
+
+async function fetchOffSearch(q: string, page: number, pageSize = 24): Promise<unknown[]> {
+  const baseParams = {
+    search_simple: 1,
+    action: 'process',
+    json: 1,
+    page: 1,
+    page_size: 40,
+    lc: 'es',
+    fields: OFF_FIELDS,
+  };
+
+  const queries: Array<Record<string, string | number>> = [
+    {
+      ...baseParams,
+      search_terms: q,
+      tagtype_0: 'countries',
+      tag_contains_0: 'contains',
+      tag_0: 'en:spain',
+      page,
+      page_size: Math.min(Math.max(pageSize * 2, 40), 60),
+    },
+    { ...baseParams, search_terms: `${q} hacendado` },
+    { ...baseParams, search_terms: `${q} mercadona` },
+    { ...baseParams, search_terms: `${q} carrefour` },
+  ];
+
+  const byId = new Map<string, Record<string, unknown>>();
+  let lastError: unknown;
+
+  for (const params of queries) {
+    try {
+      const products = await offCgiSearch(params);
+      for (const p of products) {
+        if (!p) continue;
+        const id = String(p.code || p._id || p.id || '');
+        if (!id) continue;
+        const prev = byId.get(id);
+        if (!prev || spainRetailScore(p) > spainRetailScore(prev)) byId.set(id, p);
+      }
+      await sleep(200);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  const merged = [...byId.values()]
+    .filter((p) => spainRetailScore(p) > 0 && productMatchesQuery(p, q))
+    .sort((a, b) => spainRetailScore(b) - spainRetailScore(a));
+
+  if (merged.length === 0) {
+    if (lastError) throw lastError;
+    return [];
+  }
+
+  return merged.map(formatProduct).filter(Boolean).slice(0, pageSize);
+}
+
+async function searchCustomFoods(q: string) {
+  const foods = await prisma.customFood.findMany({
+    where: {
+      userId: 1,
+      OR: [
+        { name: { contains: q } },
+        { brand: { contains: q } },
+      ],
+    },
+    take: 24,
+    orderBy: { createdAt: 'desc' },
+  });
+  return foods.map((f) => ({
+    id: `custom-${f.id}`,
+    name: f.name,
+    brand: f.brand || 'Personalizado',
+    imageUrl: null,
+    servingSize: f.servingSize,
+    per100g: {
+      calories: f.calories,
+      proteins: f.proteins,
+      carbs: f.carbs,
+      fats: f.fats,
+      fiber: f.fiber,
+      sugar: f.sugar,
+      sodium: f.sodium,
+    },
+  }));
+}
+
 foodRouter.get('/search/stream', async (req: Request, res: Response) => {
   const q = String(req.query.q || '').trim();
-  const page = parseInt(String(req.query.page || '1'));
-  const force = req.query.force === 'true'; // forzar refresco de caché
+  const page = parseInt(String(req.query.page || '1'), 10) || 1;
+  const force = req.query.force === 'true';
 
   if (!q) {
     res.status(400).json({ error: 'Término requerido' });
     return;
   }
 
-  // Cabeceras SSE
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no'); // desactivar buffering en nginx
+  res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders();
 
-  const cacheKey = `search:${q.toLowerCase()}:${page}`;
+  const cacheKey = `search:es-retail-v4:${q.toLowerCase()}:${page}`;
 
-  // ── Caché HIT → respuesta instantánea ──────────────────────────────────────
   if (!force && foodCache.has(cacheKey)) {
     const cached = foodCache.get(cacheKey) as unknown[];
     const ttl = foodCache.ttlSeconds(cacheKey);
@@ -48,38 +245,17 @@ foodRouter.get('/search/stream', async (req: Request, res: Response) => {
         total: cached.length,
       });
     }
+    if (cached.length === 0) sendSSE(res, { products: [], cached: true, done: true, total: 0 });
     res.end();
     return;
   }
 
-  // ── Caché MISS → petición a OpenFoodFacts ──────────────────────────────────
   try {
     if (force) foodCache.delete(cacheKey);
 
-    const response = await axios.get(`${OFF_BASE}/cgi/search.pl`, {
-      params: {
-        search_terms: q,
-        search_simple: 1,
-        action: 'process',
-        json: 1,
-        page,
-        page_size: 24,
-        lc: 'es',
-        fields: 'id,product_name,product_name_es,brands,image_small_url,nutriments,serving_size',
-        sort_by: 'popularity_key',
-      },
-      headers: { 'User-Agent': 'FitTrackES/1.0 (fittrack.es)' },
-      timeout: 15000,
-    });
-
-    const all: unknown[] = (response.data.products || [])
-      .map(formatProduct)
-      .filter(Boolean);
-
-    // Guardar en caché antes de enviar
+    const all = await fetchOffSearch(q, page);
     foodCache.set(cacheKey, all);
 
-    // Enviar por lotes para la sensación de "progresivo"
     if (all.length === 0) {
       sendSSE(res, { products: [], cached: false, done: true, total: 0 });
     } else {
@@ -94,106 +270,177 @@ foodRouter.get('/search/stream', async (req: Request, res: Response) => {
       }
     }
   } catch (err) {
-    sendSSE(res, { error: 'Error al buscar alimentos', done: true });
+    console.error('OFF search failed:', err instanceof Error ? err.message : err);
+    try {
+      const custom = await searchCustomFoods(q);
+      if (custom.length > 0) {
+        sendSSE(res, {
+          products: custom,
+          cached: false,
+          done: true,
+          total: custom.length,
+          degraded: true,
+          message: 'Open Food Facts no responde; mostrando alimentos personalizados',
+        });
+      } else {
+        sendSSE(res, {
+          error: 'Open Food Facts no disponible. Reintenta en unos segundos.',
+          done: true,
+        });
+      }
+    } catch {
+      sendSSE(res, { error: 'Error al buscar alimentos', done: true });
+    }
   } finally {
     res.end();
   }
 });
 
-// ─── Búsqueda clásica (no SSE, compatibilidad) ──────────────────────────────
 foodRouter.get('/search', async (req: Request, res: Response) => {
   try {
-    const { q, page = 1, pageSize = 24 } = req.query;
+    const { q, page = 1 } = req.query;
     if (!q) return res.status(400).json({ error: 'Término de búsqueda requerido' });
 
-    const cacheKey = `search:${String(q).toLowerCase()}:${page}`;
+    const cacheKey = `search:es-retail-v4:${String(q).toLowerCase()}:${page}`;
     if (foodCache.has(cacheKey)) {
       const cached = foodCache.get(cacheKey) as unknown[];
       res.setHeader('X-Cache', 'HIT');
       return res.json({ products: cached, total: cached.length, cached: true });
     }
 
-    const response = await axios.get(`${OFF_BASE}/cgi/search.pl`, {
-      params: {
-        search_terms: q, search_simple: 1, action: 'process', json: 1,
-        page, page_size: pageSize, lc: 'es',
-        fields: 'id,product_name,product_name_es,brands,image_small_url,nutriments,serving_size',
-        sort_by: 'popularity_key',
-      },
-      headers: { 'User-Agent': 'FitTrackES/1.0 (fittrack.es)' },
-      timeout: 15000,
-    });
-
-    const products = (response.data.products || []).map(formatProduct).filter(Boolean);
+    const products = await fetchOffSearch(String(q), Number(page) || 1);
     foodCache.set(cacheKey, products);
     res.setHeader('X-Cache', 'MISS');
-    return res.json({ products, total: response.data.count || products.length });
+    return res.json({ products, total: products.length });
   } catch (error) {
     console.error('Error buscando alimentos:', error);
-    return res.status(500).json({ error: 'Error al buscar alimentos' });
+    try {
+      const custom = await searchCustomFoods(String(req.query.q || ''));
+      if (custom.length > 0) {
+        return res.status(200).json({
+          products: custom,
+          total: custom.length,
+          degraded: true,
+          message: 'Open Food Facts no responde; mostrando alimentos personalizados',
+        });
+      }
+    } catch { }
+    return res.status(503).json({ error: 'Open Food Facts no disponible. Reintenta en unos segundos.' });
   }
 });
 
-// ─── Invalidar caché manualmente ────────────────────────────────────────────
 foodRouter.delete('/cache', (_req: Request, res: Response) => {
   const deleted = foodCache.deleteByPrefix('search:');
   return res.json({ ok: true, deleted, message: `${deleted} entradas eliminadas de la caché` });
 });
 
-// ─── Estado de la caché ──────────────────────────────────────────────────────
 foodRouter.get('/cache/stats', (_req: Request, res: Response) => {
   return res.json(foodCache.stats());
 });
 
-// Obtener alimento por barcode o ID
 foodRouter.get('/barcode/:code', async (req: Request, res: Response) => {
   try {
     const code = String(req.params.code);
     const cacheKey = `barcode:${code}`;
     if (foodCache.has(cacheKey)) return res.json(foodCache.get(cacheKey));
 
-    const response = await axios.get(`${OFF_BASE}/api/v2/product/${code}.json`, {
-      headers: { 'User-Agent': 'FitTrackES/1.0 (fittrack.es)' },
-      timeout: 8000,
-    });
-    if (response.data.status === 0) return res.status(404).json({ error: 'Producto no encontrado' });
-    const product = formatProduct(response.data.product);
-    if (product) foodCache.set(cacheKey, [product] as unknown[], 60 * 60 * 1000); // 1h
-    return res.json(product);
+    let lastError: unknown;
+    for (const host of OFF_HOSTS) {
+      try {
+        const response = await axios.get(`${host}/api/v2/product/${code}.json`, {
+          headers: { 'User-Agent': OFF_UA },
+          timeout: 8000,
+        });
+        if (response.data.status === 0) return res.status(404).json({ error: 'Producto no encontrado' });
+        const product = formatProduct(response.data.product);
+        if (product) foodCache.set(cacheKey, [product] as unknown[], 60 * 60 * 1000);
+        return res.json(product);
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    console.error('barcode fail:', lastError);
+    return res.status(503).json({ error: 'Open Food Facts no disponible' });
   } catch {
     return res.status(500).json({ error: 'Error al obtener el producto' });
   }
 });
 
-// Alimentos populares en España
 foodRouter.get('/popular', async (req: Request, res: Response) => {
   try {
     const category = String(req.query.category || 'en:meals');
-    const cacheKey = `popular:${category}`;
+    const cacheKey = `popular:es-retail-v3:${category}`;
     if (foodCache.has(cacheKey)) {
       return res.json({ products: foodCache.get(cacheKey), cached: true });
     }
 
-    const response = await axios.get(`${OFF_BASE}/cgi/search.pl`, {
-      params: {
-        action: 'process', json: 1, page_size: 50, lc: 'es',
-        fields: 'id,product_name,product_name_es,brands,image_small_url,nutriments,serving_size',
-        sort_by: 'popularity_key',
-        tagtype_0: 'categories', tag_contains_0: 'contains', tag_0: category,
-        countries_tags: 'es:espana',
-      },
-      headers: { 'User-Agent': 'FitTrackES/1.0 (fittrack.es)' },
-      timeout: 10000,
-    });
-    const products = (response.data.products || []).map(formatProduct).filter(Boolean);
-    foodCache.set(cacheKey, products, 60 * 60 * 1000); // 1h
-    return res.json({ products });
+    let lastError: unknown;
+    for (const host of OFF_HOSTS) {
+      try {
+        const response = await axios.get(`${host}/cgi/search.pl`, {
+          params: {
+            action: 'process',
+            json: 1,
+            page_size: 50,
+            lc: 'es',
+            fields: OFF_FIELDS,
+            tagtype_0: 'categories',
+            tag_contains_0: 'contains',
+            tag_0: category,
+            tagtype_1: 'countries',
+            tag_contains_1: 'contains',
+            tag_1: 'en:spain',
+          },
+          headers: { 'User-Agent': OFF_UA },
+          timeout: 15000,
+        });
+        const raw: Record<string, unknown>[] = response.data.products || [];
+
+        let retail: Record<string, unknown>[] = [];
+        try {
+          retail = await offCgiSearch({
+            search_terms: 'hacendado',
+            search_simple: 1,
+            action: 'process',
+            json: 1,
+            page: 1,
+            page_size: 30,
+            lc: 'es',
+            fields: OFF_FIELDS,
+            tagtype_0: 'categories',
+            tag_contains_0: 'contains',
+            tag_0: category,
+          });
+        } catch { }
+
+        const byId = new Map<string, Record<string, unknown>>();
+        for (const p of [...raw, ...retail]) {
+          if (!p) continue;
+          const id = String(p.code || p._id || p.id || '');
+          if (!id) continue;
+          const prev = byId.get(id);
+          if (!prev || spainRetailScore(p) > spainRetailScore(prev)) byId.set(id, p);
+        }
+
+        const products = [...byId.values()]
+          .filter((p) => spainRetailScore(p) > 0)
+          .sort((a, b) => spainRetailScore(b) - spainRetailScore(a))
+          .map(formatProduct)
+          .filter(Boolean);
+        foodCache.set(cacheKey, products, 60 * 60 * 1000);
+        return res.json({ products });
+      } catch (err) {
+        lastError = err;
+        await sleep(300);
+      }
+    }
+    console.error('popular fail:', lastError);
+    return res.status(503).json({ error: 'Open Food Facts no disponible' });
   } catch {
-    return res.status(500).json({ error: 'Error al obtener alimentos populares' });
+    return res.status(503).json({ error: 'Error al obtener alimentos populares' });
   }
 });
 
-// Comidas personalizadas
 foodRouter.get('/custom', async (_req: Request, res: Response) => {
   const foods = await prisma.customFood.findMany({ where: { userId: 1 }, orderBy: { createdAt: 'desc' } });
   return res.json(foods);
@@ -201,7 +448,28 @@ foodRouter.get('/custom', async (_req: Request, res: Response) => {
 
 foodRouter.post('/custom', async (req: Request, res: Response) => {
   try {
-    const food = await prisma.customFood.create({ data: { ...req.body, userId: 1 } });
+    const body = req.body && typeof req.body === 'object' ? req.body as Record<string, unknown> : {};
+    const name = typeof body.name === 'string' ? body.name.trim() : '';
+    if (!name || name.length > 120) return res.status(400).json({ error: 'Nombre inválido' });
+    const num = (v: unknown, fallback = 0) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    };
+    const food = await prisma.customFood.create({
+      data: {
+        userId: 1,
+        name,
+        brand: typeof body.brand === 'string' ? body.brand.trim() : null,
+        calories: num(body.calories),
+        proteins: num(body.proteins),
+        carbs: num(body.carbs),
+        fats: num(body.fats),
+        fiber: num(body.fiber),
+        sugar: num(body.sugar),
+        sodium: num(body.sodium),
+        servingSize: num(body.servingSize, 100) || 100,
+      },
+    });
     return res.json(food);
   } catch {
     return res.status(500).json({ error: 'Error al crear alimento personalizado' });
@@ -209,7 +477,11 @@ foodRouter.post('/custom', async (req: Request, res: Response) => {
 });
 
 foodRouter.delete('/custom/:id', async (req: Request, res: Response) => {
-  await prisma.customFood.delete({ where: { id: parseInt(String(req.params.id)) } });
+  const id = parseInt(String(req.params.id), 10);
+  if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID inválido' });
+  const existing = await prisma.customFood.findFirst({ where: { id, userId: 1 } });
+  if (!existing) return res.status(404).json({ error: 'Alimento no encontrado' });
+  await prisma.customFood.delete({ where: { id } });
   return res.json({ success: true });
 });
 
@@ -221,11 +493,11 @@ function formatProduct(p: Record<string, unknown>) {
   const kcal = n['energy-kcal_100g'] || n['energy-kcal'] || (n['energy_100g'] ? n['energy_100g'] / 4.184 : 0);
   if (!kcal) return null;
   return {
-    id: p._id || p.id,
+    id: p.code || p._id || p.id,
     name: name.trim(),
     brand: (p.brands as string) || '',
     imageUrl: (p.image_small_url as string) || null,
-    servingSize: parseFloat(p.serving_size as string) || 100,
+    servingSize: parseFloat(String(p.serving_size || '').replace(/[^\d.]/g, '')) || 100,
     per100g: {
       calories: Math.round(kcal),
       proteins: Math.round((n.proteins_100g || 0) * 10) / 10,

@@ -29,7 +29,7 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
     { day: 1, dayName: 'Día 1', exercises: [] },
   ]);
   const [expandedDay, setExpandedDay] = useState(0);
-  const [showExerciseSearch, setShowExerciseSearch] = useState<number | null>(null); // día index
+  const [showExerciseSearch, setShowExerciseSearch] = useState<number | null>(null);
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -109,7 +109,7 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      {/* Header */}
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-white">Nueva rutina</h2>
@@ -120,7 +120,6 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
         </button>
       </div>
 
-      {/* Información básica */}
       <div className="glass border border-white/5 rounded-2xl p-4 space-y-3">
         <input
           type="text"
@@ -153,11 +152,10 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
         </div>
       </div>
 
-      {/* Días */}
       <div className="space-y-3">
         {days.map((day, dayIdx) => (
           <div key={dayIdx} className="glass border border-white/5 rounded-2xl overflow-hidden">
-            {/* Day header */}
+
             <div className="flex items-center gap-3 p-4">
               <GripVertical size={14} className="text-slate-600 flex-shrink-0" />
               <input
@@ -182,7 +180,6 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
               </button>
             </div>
 
-            {/* Day exercises */}
             <AnimatePresence>
               {expandedDay === dayIdx && (
                 <motion.div
@@ -254,7 +251,6 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
         </button>
       </div>
 
-      {/* Save button */}
       <button
         onClick={() => saveMutation.mutate()}
         disabled={!canSave || saveMutation.isPending}
@@ -270,7 +266,6 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
         </p>
       )}
 
-      {/* Exercise search modal */}
       <AnimatePresence>
         {showExerciseSearch !== null && (
           <Modal title={`Añadir ejercicio — ${days[showExerciseSearch]?.dayName}`} onClose={() => setShowExerciseSearch(null)}>

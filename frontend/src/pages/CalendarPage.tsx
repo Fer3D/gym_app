@@ -142,7 +142,6 @@ export function CalendarPage() {
         </button>
       </header>
 
-      {/* Month pulse */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-[#2a2f3a] bg-[#2a2f3a] sm:grid-cols-4">
         {[
           { label: 'Días con comida', value: monthStats.nutritionDays },
@@ -163,7 +162,7 @@ export function CalendarPage() {
       </div>
 
       <div className="grid items-start gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        {/* Day detail — first on mobile */}
+
         <section className="order-1 space-y-3 lg:order-2">
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="text-sm font-medium capitalize text-[#eef0f3]">
@@ -336,7 +335,6 @@ export function CalendarPage() {
           </AnimatePresence>
         </section>
 
-        {/* Month grid */}
         <section className="order-2 lg:order-1">
           <div className="rounded-lg border border-[#2a2f3a] bg-[#14171c] p-3 sm:p-4">
             <div className="mb-2 flex items-center justify-between">

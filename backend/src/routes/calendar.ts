@@ -3,7 +3,6 @@ import { prisma } from '../lib/prisma';
 
 export const calendarRouter = Router();
 
-// Obtener resumen mensual para el calendario
 calendarRouter.get('/summary/:year/:month', async (req: Request, res: Response) => {
   const year = String(req.params.year);
   const month = String(req.params.month);
@@ -23,7 +22,6 @@ calendarRouter.get('/summary/:year/:month', async (req: Request, res: Response) 
   const user = await prisma.user.findFirst({ where: { id: 1 } });
   const calorieGoal = user?.calorieGoal || 2000;
 
-  // Crear mapa por fecha
   const dayMap: Record<string, any> = {};
 
   nutritionLogs.forEach((log) => {
@@ -55,7 +53,6 @@ calendarRouter.get('/summary/:year/:month', async (req: Request, res: Response) 
   return res.json({ days: dayMap, calorieGoal });
 });
 
-// Obtener datos completos de un día
 calendarRouter.get('/day/:date', async (req: Request, res: Response) => {
   const date = String(req.params.date);
 
