@@ -6,218 +6,80 @@
 
 ![FitTrack banner](https://capsule-render.vercel.app/api?type=waving&color=0:0f0f1a,100:4f46e5&height=220&section=header&text=FitTrack&fontSize=70&fontColor=ffffff&animation=fadeIn&fontAlignY=40&desc=Nutrition%20%C2%B7%20Workouts&descAlignY=58&descAlign=50)
 
-## Nutrition and workout tracking app
+## FitTrack
 
-Macros, routines, calendar, and profile in one app.  
-React frontend + Express backend + LibSQL (local SQLite / Turso on the live demo).
+Portfolio demo I built to track meals and workouts in the same place: macros, routines, calendar, and profile.  
+Frontend in React, API in Express, data in LibSQL (SQLite locally, Turso for the live demo). The UI follows the browser language (Spanish or English), or you can change it in Profile.
 
 [![Live demo](https://img.shields.io/badge/Live%20demo-Vercel-black?style=for-the-badge&logo=vercel)](https://gym-app-opal-eight.vercel.app)
 
-> **Public demo:** no auth. Everyone shares the same user (`userId` 1). Fine for trying the UI; do not enter personal data.
->
-> API: [https://gym-app-otiw.onrender.com/api/health](https://gym-app-otiw.onrender.com/api/health)
+> **Heads up:** the public demo has no login. Everyone uses the same shared user (`userId` 1), so please don’t put any personal information in there.  
+> API ping: [gym-app-otiw.onrender.com/api/health](https://gym-app-otiw.onrender.com/api/health)
 
-> **Legal notice / name:** “FitTrack” is a **placeholder name** for this portfolio demo. It is not a commercial product or a trademark of the author. Any similarity to third-party brands, apps, products, or companies (including those using the same or a similar name) is **coincidental and unintentional**. This project is not affiliated with, sponsored by, or related to them.
+> **About the name:** “FitTrack” is just a placeholder for this portfolio piece. It’s not a product I’m selling, and I’m not claiming the trademark. If it overlaps with another brand, that’s coincidence — not affiliation.
 
 ---
 
 ## Screenshots
 
-![FitTrack nutrition](https://github.com/user-attachments/assets/08e98a3f-44d3-4a74-b0ec-40bc63b93104)
+A few shots of the app in use:
 
-![FitTrack nutrition](https://github.com/user-attachments/assets/bc94e815-b05c-41ac-969f-a12c4e511832)
+![Dashboard](https://github.com/user-attachments/assets/08e98a3f-44d3-4a74-b0ec-40bc63b93104)
 
-![FitTrack nutrition](https://github.com/user-attachments/assets/f1d68a01-73d1-4bfd-a1e2-571f0134bb6d)
+![Nutrition](https://github.com/user-attachments/assets/bc94e815-b05c-41ac-969f-a12c4e511832)
 
----
-
-## What it does
-
-
-| Module       | Description                                                      |
-| ------------ | ---------------------------------------------------------------- |
-| **Dashboard**  | Day overview: calories, macros, workouts, and weekly chart     |
-| **Nutrition**  | Meals, food search, and macro goals                            |
-| **Workout**    | Routines, exercises, and set logging                           |
-| **Calendar**   | Daily/monthly view of nutrition and workouts                   |
-| **Profile**    | User data, TDEE, and goals                                     |
-
+![Workout](https://github.com/user-attachments/assets/f1d68a01-73d1-4bfd-a1e2-571f0134bb6d)
 
 ---
 
-## Project stack
-
-### Languages
+## What I used
 
 <table>
   <tr>
-    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" width="40" height="40" alt="TypeScript"><br>TypeScript</td>
-    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" width="40" height="40" alt="JavaScript"><br>JavaScript</td>
-    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" width="40" height="40" alt="HTML"><br>HTML</td>
-    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" width="40" height="40" alt="CSS"><br>CSS</td>
+    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="40" height="40" alt="React"><br>React</td>
+    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" width="40" height="40" alt="TypeScript"><br>TypeScript</td>
+    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" width="40" height="40" alt="Vite"><br>Vite</td>
+    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" width="40" height="40" alt="Tailwind"><br>Tailwind</td>
+    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" width="40" height="40" alt="Node.js"><br>Node</td>
+    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" width="40" height="40" alt="Express"><br>Express</td>
+    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg" width="40" height="40" alt="Prisma"><br>Prisma</td>
   </tr>
 </table>
 
-### Frontend
+Plus TanStack Query, i18next, Axios, Framer Motion, Recharts, date-fns, and LibSQL/Turso when it’s online.
 
-<table>
-  <tr>
-    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="40" height="40" alt="React"><br>React</td>
-    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" width="40" height="40" alt="Vite"><br>Vite</td>
-    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" width="40" height="40" alt="Tailwind CSS"><br>Tailwind</td>
-    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/reactrouter/reactrouter-original.svg" width="40" height="40" alt="React Router"><br>React Router</td>
-  </tr>
-</table>
+The live split is simple: UI on Vercel, API on Render, DB on Turso. Copy [`.env.example`](./.env.example) if you want to run it yourself.
 
-| Library            | Role                        |
-| ------------------ | --------------------------- |
-| **TanStack Query** | API cache and fetching      |
-| **Axios**          | HTTP client                 |
-| **Framer Motion**  | UI animations               |
-| **Recharts**       | Nutrition charts            |
-| **Lucide React**   | Icons                       |
-| **date-fns**       | Dates / Spanish locale      |
-| **react-calendar** | Calendar                    |
+---
 
-### Backend
-
-<table>
-  <tr>
-    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" width="40" height="40" alt="Node.js"><br>Node.js</td>
-    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" width="40" height="40" alt="Express"><br>Express</td>
-    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg" width="40" height="40" alt="Prisma"><br>Prisma</td>
-    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/sqlite/sqlite-original.svg" width="40" height="40" alt="SQLite"><br>SQLite</td>
-  </tr>
-</table>
-
-| Piece               | Detail                                                                 |
-| ------------------- | ---------------------------------------------------------------------- |
-| **Express 5**       | REST API (`/api/...`)                                                  |
-| **Prisma + LibSQL** | ORM: local SQLite (`file:./dev.db`) or Turso (`libsql://...`) on demo |
-| **CORS / dotenv**   | Frontend origin + environment variables                                |
-
-### Deploy (demo)
-
-| Piece    | Host                                                  |
-| -------- | ----------------------------------------------------- |
-| Frontend | Vercel (`frontend/`, env `VITE_API_URL`)              |
-| API      | Render Web Service (`backend/`, `npm run start:prod`) |
-| DB       | Turso LibSQL (`DATABASE_URL` + `TURSO_AUTH_TOKEN`)    |
-
-Key variables (see `.env.example`):
+## Run it locally
 
 ```bash
-# backend
-DATABASE_URL=libsql://...
-TURSO_AUTH_TOKEN=...
-CORS_ORIGIN=https://gym-app-opal-eight.vercel.app
-PORT=3001
-
-# frontend (Vercel)
-# VITE_API_URL=https://gym-app-otiw.onrender.com/api
-```
-
-Render: root `backend`, build `npm install && npm run build`, start `npm run start:prod`.  
-Live UI: [https://gym-app-opal-eight.vercel.app](https://gym-app-opal-eight.vercel.app) — API: [https://gym-app-otiw.onrender.com](https://gym-app-otiw.onrender.com)  
-Vercel: root `frontend`.
-
-### Tooling
-
-<table>
-  <tr>
-    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/npm/npm-original-wordmark.svg" width="40" height="40" alt="npm"><br>npm</td>
-    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg" width="40" height="40" alt="Git"><br>Git</td>
-    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" width="40" height="40" alt="GitHub"><br>GitHub</td>
-    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg" width="40" height="40" alt="VS Code"><br>VS Code</td>
-    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/eslint/eslint-original.svg" width="40" height="40" alt="ESLint"><br>ESLint</td>
-  </tr>
-</table>
-
----
-
-## Structure
-
-```
-gym_app/
-├── frontend/     # React + Vite + Tailwind (Vercel)
-├── backend/      # Express + Prisma + LibSQL (Render)
-├── package.json  # concurrently (dev frontend + backend)
-├── README.md     # English
-└── README_es.md  # Spanish
-```
-
----
-
-## Getting started
-
-Copy `.env.example` to `backend/.env` (local: `DATABASE_URL=file:./dev.db`).
-
-```bash
-# Dependencies
+cp .env.example backend/.env   # local: DATABASE_URL=file:./dev.db
 npm run install:all
-
-# Migrations (first time / after clone)
 cd backend && npx prisma migrate deploy && cd ..
-
-# Dev (API + UI)
 npm run dev
 ```
 
-
-| Service  | Typical URL             |
-| -------- | ----------------------- |
-| Frontend | `http://localhost:5173` |
-| Backend  | `http://localhost:3001` |
-
-
-Useful backend scripts:
-
-```bash
-cd backend
-npm run db:migrate
-npm run db:studio
-```
+Then open `http://localhost:5173` — the API listens on `http://localhost:3001`.
 
 ---
 
 ## Tests
 
-Frontend uses **Vitest**. Current suite: **18** logic tests (no browser, no real API).
-
-
-| File                             | Coverage                                                                                                                                                                      |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `frontend/src/lib/utils.test.ts` | Macros (`calcMacrosFromPer100g`), progress (`pct`, `remaining`), meal labels, Spanish dates (`dateToString`, `getWeekStart`, `formatDate`), greetings (`greetingForHour`) |
-| `frontend/src/lib/mock.test.ts`  | Nutrition, workout, and calendar fixtures                                                                                                                                     |
-
-
-### How to run them
-
-From the repo root:
+I keep a small Vitest suite for the pure logic (no browser, no real API). From the repo root:
 
 ```bash
 npm test
-```
-
-From `frontend/`:
-
-```bash
-cd frontend
-npm test                 # single run
-npm run test:watch       # watch mode
-npx vitest run --reporter=verbose   # list each test
-npm run test:coverage    # coverage
 ```
 
 ---
 
 ## Accessibility and SEO
 
-I did not try to game Google: this is a portfolio SPA. What mattered was keyboard use, screen readers understanding forms and buttons, and a usable card when the link is shared.
+I didn’t try to rank on Google: it’s a portfolio SPA. I did care that you can use it with a keyboard, that a screen reader understands forms and icon buttons, and that sharing the link shows a preview card.
 
-Accessibility includes a skip link to main content, modals that close on Escape and keep focus trapped inside, real labels on the profile form, and `aria-label` where a control is icon-only. Also `:focus-visible` and respect for `prefers-reduced-motion`.
-
-For SEO there is a per-route title, description, Open Graph / Twitter tags, favicon, and a real `robots.txt` + `sitemap.xml` under `public/` (before that, Vercel served the app HTML and fooled crawlers).
+That’s why there’s a skip link, modals that close with Escape and keep focus inside, real labels on the profile form, `aria-label` where a control is icon-only, `:focus-visible`, and respect for `prefers-reduced-motion`. For the share card: per-page titles, description, Open Graph / Twitter, favicon, and a real `robots.txt` + `sitemap.xml` in `public/`.
 
 ---
 
