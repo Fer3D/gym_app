@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,7 +9,7 @@ import {
 } from 'lucide-react';
 import { workoutApi, routineApi } from '../lib/api';
 import type { Exercise, WorkoutLog, ExerciseLog, Routine } from '../lib/utils';
-import { todayString, dateToString, formatDateLabel } from '../lib/utils';
+import { todayString, dateToString, formatDateLabel, isValidDateString } from '../lib/utils';
 import { ExerciseSearch } from '../components/workout/ExerciseSearch';
 import { RoutineBuilder } from '../components/workout/RoutineBuilder';
 import { ExploreRoutines } from '../components/workout/ExploreRoutines';
@@ -20,13 +21,21 @@ type RoutinesSubView = 'list' | 'create' | 'explore';
 
 export function WorkoutPage() {
   const qc = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [mainTab, setMainTab] = useState<MainTab>('today');
   const [routinesSubView, setRoutinesSubView] = useState<RoutinesSubView>('list');
-  const [selectedDate, setSelectedDate] = useState(todayString());
+  const [selectedDate, setSelectedDate] = useState(() =>
+    isValidDateString(searchParams.get('date')) ? searchParams.get('date')! : todayString()
+  );
   const [showExerciseSearch, setShowExerciseSearch] = useState(false);
   const [activeWorkoutId, setActiveWorkoutId] = useState<number | null>(null);
 
   const [startingRoutine, setStartingRoutine] = useState<Routine | null>(null);
+
+  useEffect(() => {
+    const fromUrl = searchParams.get('date');
+    if (isValidDateString(fromUrl)) setSelectedDate(fromUrl);
+  }, [searchParams]);
 
   const {
     data: workouts = [],

@@ -200,13 +200,13 @@ export function CalendarPage() {
                   </p>
                   <div className="mt-5 flex flex-wrap justify-center gap-2">
                     <Link
-                      to="/nutricion"
+                      to={`/nutricion?date=${selectedStr}`}
                       className="inline-flex h-10 items-center rounded-md bg-[#3ecf8e] px-4 text-sm font-semibold text-[#062016]"
                     >
                       Añadir comida
                     </Link>
                     <Link
-                      to="/entreno"
+                      to={`/entreno?date=${selectedStr}`}
                       className="inline-flex h-10 items-center rounded-md border border-[#2a2f3a] bg-[#1b1f27] px-4 text-sm text-[#eef0f3]"
                     >
                       Entreno
@@ -230,7 +230,7 @@ export function CalendarPage() {
                           </span>
                         ) : (
                           <Link
-                            to="/nutricion"
+                            to={`/nutricion?date=${selectedStr}`}
                             className="inline-flex items-center gap-0.5 text-xs text-[#9aa3b2] hover:text-[#eef0f3]"
                           >
                             Abrir <ArrowUpRight size={12} />
@@ -298,7 +298,7 @@ export function CalendarPage() {
                           </span>
                         </div>
                         <Link
-                          to="/entreno"
+                          to={`/entreno?date=${selectedStr}`}
                           className="inline-flex items-center gap-0.5 text-xs text-[#9aa3b2] hover:text-[#eef0f3]"
                         >
                           Abrir <ArrowUpRight size={12} />

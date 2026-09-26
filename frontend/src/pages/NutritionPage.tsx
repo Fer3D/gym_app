@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Plus, Trash2, Package } from 'lucide-react';
 import { nutritionApi, userApi } from '../lib/api';
-import { todayString, dateToString, formatDateLabel, getMealLabel, calcMacrosFromPer100g } from '../lib/utils';
+import { todayString, dateToString, formatDateLabel, getMealLabel, calcMacrosFromPer100g, isValidDateString } from '../lib/utils';
 import { FoodSearch } from '../components/nutrition/FoodSearch';
 import { MacroRing, Modal, Spinner, QueryError, MutationError } from '../components/common/UI';
 import { format, addDays, parseISO } from 'date-fns';
@@ -12,9 +13,21 @@ const MEALS = ['desayuno', 'almuerzo', 'cena', 'snack'];
 
 export function NutritionPage() {
   const qc = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState(todayString());
+  const [searchParams] = useSearchParams();
+  const [selectedDate, setSelectedDate] = useState(() =>
+    isValidDateString(searchParams.get('date')) ? searchParams.get('date')! : todayString()
+  );
   const [addingToMeal, setAddingToMeal] = useState<string | null>(null);
-  const [expandedMeal, setExpandedMeal] = useState<string | null>('desayuno');
+  const [userMealOpen, setUserMealOpen] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const fromUrl = searchParams.get('date');
+    if (isValidDateString(fromUrl)) setSelectedDate(fromUrl);
+  }, [searchParams]);
+
+  useEffect(() => {
+    setUserMealOpen({});
+  }, [selectedDate]);
 
   const { data: profile } = useQuery({
     queryKey: ['user-profile'],
@@ -156,7 +169,9 @@ export function NutritionPage() {
             {MEALS.map((mealType) => {
               const mealItems = meals[mealType] || [];
               const mealCals = mealItems.reduce((sum: number, m: any) => sum + m.calories, 0);
-              const isExpanded = expandedMeal === mealType;
+              const hasItems = mealItems.length > 0;
+              const isExpanded =
+                mealType in userMealOpen ? userMealOpen[mealType] : hasItems;
 
               return (
                 <motion.div
@@ -166,7 +181,9 @@ export function NutritionPage() {
                   <div className="flex items-center gap-3 p-4">
                     <button
                       type="button"
-                      onClick={() => setExpandedMeal(isExpanded ? null : mealType)}
+                      onClick={() =>
+                        setUserMealOpen((prev) => ({ ...prev, [mealType]: !isExpanded }))
+                      }
                       className="flex-1 flex items-center gap-3 text-left hover:opacity-90 transition-opacity"
                       aria-expanded={isExpanded}
                     >
