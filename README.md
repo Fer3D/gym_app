@@ -1,4 +1,4 @@
-![FitTrack ES banner](https://capsule-render.vercel.app/api?type=waving&color=0:0f0f1a,100:4f46e5&height=220&section=header&text=FitTrack%20ES&fontSize=70&fontColor=ffffff&animation=fadeIn&fontAlignY=40&desc=Nutrici%C3%B3n%20%C2%B7%20Entrenamientos%20%C2%B7%20Espa%C3%B1a&descAlignY=58&descAlign=50)
+![FitTrack banner](https://capsule-render.vercel.app/api?type=waving&color=0:0f0f1a,100:4f46e5&height=220&section=header&text=FitTrack&fontSize=70&fontColor=ffffff&animation=fadeIn&fontAlignY=40&desc=Nutrici%C3%B3n%20%C2%B7%20Entrenamientos&descAlignY=58&descAlign=50)
 
 ## App de nutrición y entrenamientos
 
@@ -15,11 +15,11 @@ Frontend React + backend Express + LibSQL (SQLite local / Turso en demo).
 
 ## Capturas
 
-![Nutrición FitTrack ES](https://github.com/user-attachments/assets/08e98a3f-44d3-4a74-b0ec-40bc63b93104)
+![Nutrición FitTrack](https://github.com/user-attachments/assets/08e98a3f-44d3-4a74-b0ec-40bc63b93104)
 
-![Nutrición FitTrack ES](https://github.com/user-attachments/assets/bc94e815-b05c-41ac-969f-a12c4e511832)
+![Nutrición FitTrack](https://github.com/user-attachments/assets/bc94e815-b05c-41ac-969f-a12c4e511832)
 
-![Nutrición FitTrack ES](https://github.com/user-attachments/assets/f1d68a01-73d1-4bfd-a1e2-571f0134bb6d)
+![Nutrición FitTrack](https://github.com/user-attachments/assets/f1d68a01-73d1-4bfd-a1e2-571f0134bb6d)
 
 ---
 
@@ -41,20 +41,25 @@ Frontend React + backend Express + LibSQL (SQLite local / Turso en demo).
 
 ### Lenguajes
 
-
-|                                                                                                                 |                                                                                                                 |                                                                                           |                                                                                       |
-| --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| ![TypeScript](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg) TypeScript | ![JavaScript](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg) JavaScript | ![HTML](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg) HTML | ![CSS](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg) CSS |
-
+<table>
+  <tr>
+    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" width="40" height="40" alt="TypeScript"><br>TypeScript</td>
+    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" width="40" height="40" alt="JavaScript"><br>JavaScript</td>
+    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" width="40" height="40" alt="HTML"><br>HTML</td>
+    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" width="40" height="40" alt="CSS"><br>CSS</td>
+  </tr>
+</table>
 
 ### Frontend
 
-
-|                                                                                             |                                                                                             |                                                                                                                   |                                                                                                                       |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| ![React](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg) React | ![Vite](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg) Vite | ![Tailwind CSS](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg) Tailwind | ![React Router](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/reactrouter/reactrouter-original.svg) React Router |
-
-
+<table>
+  <tr>
+    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="40" height="40" alt="React"><br>React</td>
+    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" width="40" height="40" alt="Vite"><br>Vite</td>
+    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" width="40" height="40" alt="Tailwind CSS"><br>Tailwind</td>
+    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/reactrouter/reactrouter-original.svg" width="40" height="40" alt="React Router"><br>React Router</td>
+  </tr>
+</table>
 
 | Librería           | Uso                     |
 | ------------------ | ----------------------- |
@@ -66,15 +71,16 @@ Frontend React + backend Express + LibSQL (SQLite local / Turso en demo).
 | **date-fns**       | Fechas / locale ES      |
 | **react-calendar** | Calendario              |
 
-
 ### Backend
 
-
-|                                                                                                   |                                                                                                     |                                                                                                 |                                                                                                 |
-| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| ![Node.js](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg) Node.js | ![Express](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg) Express | ![Prisma](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg) Prisma | ![SQLite](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/sqlite/sqlite-original.svg) SQLite |
-
-
+<table>
+  <tr>
+    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" width="40" height="40" alt="Node.js"><br>Node.js</td>
+    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" width="40" height="40" alt="Express"><br>Express</td>
+    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg" width="40" height="40" alt="Prisma"><br>Prisma</td>
+    <td align="center" width="110"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/sqlite/sqlite-original.svg" width="40" height="40" alt="SQLite"><br>SQLite</td>
+  </tr>
+</table>
 
 | Pieza               | Detalle                                                              |
 | ------------------- | -------------------------------------------------------------------- |
@@ -82,16 +88,13 @@ Frontend React + backend Express + LibSQL (SQLite local / Turso en demo).
 | **Prisma + LibSQL** | ORM: SQLite local (`file:./dev.db`) o Turso (`libsql://...`) en demo |
 | **CORS / dotenv**   | Origen frontend + variables de entorno                               |
 
-
 ### Deploy (demo)
-
 
 | Pieza    | Host                                                  |
 | -------- | ----------------------------------------------------- |
 | Frontend | Vercel (`frontend/`, env `VITE_API_URL`)              |
 | API      | Render Web Service (`backend/`, `npm run start:prod`) |
 | DB       | Turso LibSQL (`DATABASE_URL` + `TURSO_AUTH_TOKEN`)    |
-
 
 Variables clave (ver `.env.example`):
 
@@ -112,11 +115,15 @@ Vercel: root `frontend`.
 
 ### Herramientas
 
-
-|                                                                                              |                                                                                     |                                                                                                 |                                                                                                   |                                                                                                 |
-| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| ![npm](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/npm/npm-original-wordmark.svg) npm | ![Git](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg) Git | ![GitHub](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg) GitHub | ![VS Code](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg) VS Code | ![ESLint](https://cdn.jsdelivr.net/gh/devicons/devicon/icons/eslint/eslint-original.svg) ESLint |
-
+<table>
+  <tr>
+    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/npm/npm-original-wordmark.svg" width="40" height="40" alt="npm"><br>npm</td>
+    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg" width="40" height="40" alt="Git"><br>Git</td>
+    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" width="40" height="40" alt="GitHub"><br>GitHub</td>
+    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg" width="40" height="40" alt="VS Code"><br>VS Code</td>
+    <td align="center" width="100"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/eslint/eslint-original.svg" width="40" height="40" alt="ESLint"><br>ESLint</td>
+  </tr>
+</table>
 
 ---
 

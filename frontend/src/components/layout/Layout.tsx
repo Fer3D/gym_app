@@ -19,7 +19,7 @@ function usePageTitle() {
   const { pathname } = useLocation();
   useEffect(() => {
     const base = TITLES[pathname] || 'FitTrack';
-    document.title = `${base} · FitTrack ES`;
+    document.title = `${base} · FitTrack`;
   }, [pathname]);
 }
 

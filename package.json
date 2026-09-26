@@ -1,7 +1,7 @@
 {
-  "name": "fittrack-es",
+  "name": "fittrack",
   "version": "1.0.0",
-  "description": "App de nutrición y entrenamientos para España",
+  "description": "App de nutrición y entrenamientos",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",

@@ -32,10 +32,7 @@ export function Sidebar() {
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-600">
             <Zap size={18} className="text-white" />
           </div>
-          <div>
-            <span className="text-sm font-bold leading-none text-white">FitTrack</span>
-            <p className="mt-0.5 text-[10px] leading-none text-indigo-400">España</p>
-          </div>
+          <span className="text-sm font-bold leading-none text-white">FitTrack</span>
         </div>
 
         <nav className="flex-1 space-y-1 px-2 py-4" aria-label="Principal">
@@ -62,7 +59,7 @@ export function Sidebar() {
         </nav>
 
         <div className="border-t border-indigo-500/10 px-4 py-4">
-          <p className="text-center text-[10px] text-slate-400">FitTrack ES v1.0</p>
+          <p className="text-center text-[10px] text-slate-400">FitTrack v1.0</p>
         </div>
       </aside>
 

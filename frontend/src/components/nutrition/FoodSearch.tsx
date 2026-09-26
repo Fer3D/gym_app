@@ -254,11 +254,11 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
               )}
               {searchState === 'done' && wasCached && (
                 <><Zap size={11} className="text-green-400" />
-                <span className="text-green-400">España · popularidad</span>
+                <span className="text-green-400">Por popularidad</span>
                 {cacheTTL > 0 && <><Clock size={10} className="text-slate-600 ml-1" /><span className="text-slate-600">{Math.round(cacheTTL / 60)}min</span></>}</>
               )}
               {searchState === 'done' && !wasCached && products.length > 0 && (
-                <span className="text-slate-500">{products.length} súper España · popularidad</span>
+                <span className="text-slate-500">{products.length} por popularidad</span>
               )}
               {searchState === 'error' && <span className="text-red-400">{errorMsg || 'Error al buscar'}</span>}
             </span>
@@ -274,7 +274,7 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
           </div>
         )}
         {!debouncedQ && (
-          <p className="text-slate-500 text-xs text-center">Mostrando alimentos populares en España</p>
+          <p className="text-slate-500 text-xs text-center">Mostrando alimentos populares</p>
         )}
       </div>
 

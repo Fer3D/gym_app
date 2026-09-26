@@ -114,7 +114,7 @@ userRouter.get('/profile', async (_req: Request, res: Response) => {
   let user = await prisma.user.findFirst({ where: { id: 1 } });
   if (!user) {
     user = await prisma.user.create({
-      data: { id: 1, name: 'Usuario', email: 'user@fittrack.es' },
+      data: { id: 1, name: 'Usuario', email: 'user@fittrack.app' },
     });
   }
   return res.json(user);
@@ -129,7 +129,7 @@ userRouter.put('/profile', async (req: Request, res: Response) => {
 
     let user = await prisma.user.findFirst({ where: { id: 1 } });
     if (!user) {
-      user = await prisma.user.create({ data: { id: 1, name: 'Usuario', email: 'user@fittrack.es' } });
+      user = await prisma.user.create({ data: { id: 1, name: 'Usuario', email: 'user@fittrack.app' } });
     }
 
     const updated = await prisma.user.update({ where: { id: 1 }, data: parsed.data });

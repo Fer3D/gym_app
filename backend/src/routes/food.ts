@@ -9,7 +9,7 @@ const OFF_HOSTS = [
   'https://es.openfoodfacts.org',
 ];
 const BATCH_SIZE = 6;
-const OFF_UA = 'FitTrackES/1.0 (fittrack.es)';
+const OFF_UA = 'FitTrack/1.0 (fittrack.app)';
 
 const OFF_FIELDS =
   'code,product_name,product_name_es,brands,image_small_url,nutriments,serving_size,unique_scans_n,popularity_key,countries_tags,countries_tags_en,stores,stores_tags,lang,languages_tags';

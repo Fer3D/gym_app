@@ -9,7 +9,7 @@ datasource db {
 model User {
   id        Int      @id @default(autoincrement())
   name      String   @default("Usuario")
-  email     String   @unique @default("user@fittrack.es")
+  email     String   @unique @default("user@fittrack.app")
   weight    Float?
   height    Float?
   birthDate DateTime?

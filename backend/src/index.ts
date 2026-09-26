@@ -29,7 +29,7 @@ app.use('/api/user', userRouter);
 app.use('/api/calendar', calendarRouter);
 
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'OK', message: 'FitTrack ES API funcionando correctamente', timestamp: new Date().toISOString() });
+  res.json({ status: 'OK', message: 'FitTrack API funcionando correctamente', timestamp: new Date().toISOString() });
 });
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
