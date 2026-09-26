@@ -1,29 +1,34 @@
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, enUS } from 'date-fns/locale';
 import { clsx, type ClassValue } from 'clsx';
 import type { Macros, MacrosPer100g } from '../types';
+import i18n from '../i18n';
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
 
+export function getDateFnsLocale() {
+  return i18n.language?.toLowerCase().startsWith('en') ? enUS : es;
+}
+
 export function formatDate(date: string | Date, fmt = 'd MMMM yyyy') {
   const d = typeof date === 'string' ? parseISO(date) : date;
-  return format(d, fmt, { locale: es });
+  return format(d, fmt, { locale: getDateFnsLocale() });
 }
 
 export function formatDateLabel(date: string) {
   const d = parseISO(date);
-  if (isToday(d)) return 'Hoy';
-  if (isYesterday(d)) return 'Ayer';
-  return format(d, "EEEE, d MMMM", { locale: es });
+  if (isToday(d)) return i18n.t('common.today');
+  if (isYesterday(d)) return i18n.t('common.yesterday');
+  return format(d, 'EEEE, d MMMM', { locale: getDateFnsLocale() });
 }
 
 export function greetingForHour(date = new Date()) {
   const h = date.getHours();
-  if (h < 12) return 'Buenos días';
-  if (h < 20) return 'Buenas tardes';
-  return 'Buenas noches';
+  if (h < 12) return i18n.t('time.goodMorning');
+  if (h < 20) return i18n.t('time.goodAfternoon');
+  return i18n.t('time.goodEvening');
 }
 
 export function todayString() {
@@ -60,13 +65,9 @@ export function calcMacrosFromPer100g(per100g: MacrosPer100g, quantity: number):
 }
 
 export function getMealLabel(mealType: string) {
-  const labels: Record<string, string> = {
-    desayuno: 'Desayuno',
-    almuerzo: 'Comida',
-    cena: 'Cena',
-    snack: 'Snacks',
-  };
-  return labels[mealType] || mealType;
+  const key = `meals.${mealType}`;
+  const translated = i18n.t(key);
+  return translated === key ? mealType : translated;
 }
 
 export function pct(value: number, goal: number) {
@@ -90,10 +91,10 @@ export function weightAnomalyWarning(weight: number, historyWeights: number[]): 
   const med = median(historyWeights);
   if (med == null || historyWeights.filter((w) => w > 0).length < 3) return null;
   if (weight > med * 2.5) {
-    return `Peso muy alto vs tu media (~${Math.round(med)} kg). ¿Seguro?`;
+    return i18n.t('weightWarning.high', { med: Math.round(med) });
   }
   if (weight < med / 3) {
-    return `Peso muy bajo vs tu media (~${Math.round(med)} kg). ¿Seguro?`;
+    return i18n.t('weightWarning.low', { med: Math.round(med) });
   }
   return null;
 }
@@ -111,6 +112,16 @@ export const EXERCISE_CATEGORY_ICONS: Record<string, string> = {
 
 export function exerciseCategoryIcon(category?: string | null) {
   return EXERCISE_CATEGORY_ICONS[category || ''] || '🏋️';
+}
+
+export function translateExerciseCategory(
+  name: string | null | undefined,
+  t: (key: string) => string,
+): string {
+  if (!name) return '';
+  const key = `exerciseSearch.${name}`;
+  const translated = t(key);
+  return translated === key ? name : translated;
 }
 
 export type { Macros, MacrosPer100g, FoodProduct, MealLog, WorkoutLog, ExerciseLog, ExerciseSet, Exercise, ExerciseReorder, Routine, RoutineDay, RoutineExercise } from '../types';

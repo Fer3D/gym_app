@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,7 +10,7 @@ import {
 } from 'lucide-react';
 import { workoutApi, routineApi } from '../lib/api';
 import type { Exercise, WorkoutLog, ExerciseLog, Routine } from '../lib/utils';
-import { todayString, dateToString, formatDateLabel, isValidDateString, weightAnomalyWarning, exerciseCategoryIcon } from '../lib/utils';
+import { todayString, dateToString, formatDateLabel, isValidDateString, weightAnomalyWarning, exerciseCategoryIcon, translateExerciseCategory } from '../lib/utils';
 import type { ExerciseSet } from '../lib/utils';
 import { ExerciseSearch } from '../components/workout/ExerciseSearch';
 import { RoutineBuilder } from '../components/workout/RoutineBuilder';
@@ -21,6 +22,8 @@ type MainTab = 'today' | 'routines';
 type RoutinesSubView = 'list' | 'create' | 'explore';
 
 export function WorkoutPage() {
+  const { t } = useTranslation();
+  const freeWorkoutName = t('workout.freeName');
   const qc = useQueryClient();
   const [searchParams] = useSearchParams();
   const [mainTab, setMainTab] = useState<MainTab>('today');
@@ -153,17 +156,17 @@ export function WorkoutPage() {
   });
 
   const mutationError =
-    (createWorkoutMutation.isError && 'No se pudo crear el entrenamiento.') ||
-    (deleteWorkoutMutation.isError && 'No se pudo eliminar el entrenamiento.') ||
-    (addExerciseMutation.isError && 'No se pudo añadir el ejercicio.') ||
-    (reorderExercisesMutation.isError && 'No se pudo reordenar ejercicios.') ||
-    (deleteExerciseMutation.isError && 'No se pudo eliminar el ejercicio.') ||
-    (updateExerciseMutation.isError && 'No se pudo actualizar el ejercicio.') ||
-    (addSetMutation.isError && 'No se pudo añadir la serie.') ||
-    (updateSetMutation.isError && 'No se pudo actualizar la serie.') ||
-    (deleteSetMutation.isError && 'No se pudo eliminar la serie.') ||
-    (deleteRoutineMutation.isError && 'No se pudo eliminar la rutina.') ||
-    (startFromSavedMutation.isError && 'No se pudo iniciar la rutina.') ||
+    (createWorkoutMutation.isError && t('workout.errCreate')) ||
+    (deleteWorkoutMutation.isError && t('workout.errDelete')) ||
+    (addExerciseMutation.isError && t('workout.errAddExercise')) ||
+    (reorderExercisesMutation.isError && t('workout.errReorder')) ||
+    (deleteExerciseMutation.isError && t('workout.errDeleteExercise')) ||
+    (updateExerciseMutation.isError && t('workout.errUpdateExercise')) ||
+    (addSetMutation.isError && t('workout.errAddSet')) ||
+    (updateSetMutation.isError && t('workout.errUpdateSet')) ||
+    (deleteSetMutation.isError && t('workout.errDeleteSet')) ||
+    (deleteRoutineMutation.isError && t('workout.errDeleteRoutine')) ||
+    (startFromSavedMutation.isError && t('workout.errStartRoutine')) ||
     null;
 
   const goToDay = (delta: number) => {
@@ -184,20 +187,20 @@ export function WorkoutPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Entrenamiento</h1>
+        <h1 className="text-2xl font-bold text-white">{t('workout.title')}</h1>
         {mainTab === 'today' && (workouts as WorkoutLog[]).length === 0 && !isLoading && selectedDate === todayString() && (
           <button
-            onClick={() => createWorkoutMutation.mutate('Entrenamiento libre')}
+            onClick={() => createWorkoutMutation.mutate(freeWorkoutName)}
             disabled={createWorkoutMutation.isPending}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
           >
-            <Zap size={15} /> Iniciar
+            <Zap size={15} /> {t('workout.start')}
           </button>
         )}
       </div>
 
-      <div className="flex gap-1 p-1 glass border border-white/5 rounded-2xl" role="tablist" aria-label="Sección de entrenamiento">
-        {([['today', '🏋️ Hoy'], ['routines', '📋 Rutinas']] as [MainTab, string][]).map(([tab, label]) => (
+      <div className="flex gap-1 p-1 glass border border-white/5 rounded-2xl" role="tablist" aria-label={t('workout.tabAria')}>
+        {([['today', t('workout.tabToday')], ['routines', t('workout.tabRoutines')]] as [MainTab, string][]).map(([tab, label]) => (
           <button
             key={tab}
             type="button"
@@ -217,7 +220,7 @@ export function WorkoutPage() {
         <div className="space-y-4">
 
           <div className="flex items-center gap-3 glass border border-indigo-500/10 rounded-2xl px-4 py-3">
-            <button type="button" onClick={() => goToDay(-1)} aria-label="Día anterior" className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white">
+            <button type="button" onClick={() => goToDay(-1)} aria-label={t('workout.previousDay')} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white">
               <ChevronLeft size={18} />
             </button>
             <div className="flex-1 text-center">
@@ -228,7 +231,7 @@ export function WorkoutPage() {
               type="button"
               onClick={() => goToDay(1)}
               disabled={selectedDate >= todayString()}
-              aria-label="Día siguiente"
+              aria-label={t('workout.nextDay')}
               className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white disabled:opacity-30"
             >
               <ChevronRight size={18} />
@@ -258,14 +261,14 @@ export function WorkoutPage() {
           ) : workoutsError ? (
             <div className="glass border border-red-500/20 rounded-2xl">
               <QueryError
-                message="No se pudo cargar los entrenamientos de este día."
+                message={t('workout.errLoadDay')}
                 onRetry={() => void refetchWorkouts()}
               />
             </div>
           ) : !activeWorkout ? (
             <WorkoutHub
               date={selectedDate}
-              onEmpty={() => createWorkoutMutation.mutate('Entrenamiento libre')}
+              onEmpty={() => createWorkoutMutation.mutate(freeWorkoutName)}
               onCreateRoutine={() => { setMainTab('routines'); setRoutinesSubView('create'); }}
               onExplore={() => { setMainTab('routines'); setRoutinesSubView('explore'); }}
               onUseSaved={() => { setMainTab('routines'); setRoutinesSubView('list'); }}
@@ -279,8 +282,10 @@ export function WorkoutPage() {
                 <div>
                   <p className="text-white font-semibold">{activeWorkout.name}</p>
                   <p className="text-slate-400 text-xs mt-0.5">
-                    {activeWorkout.exerciseLogs?.length || 0} ejercicios ·{' '}
-                    {activeWorkout.exerciseLogs?.reduce((s, e) => s + (e.sets?.length || 0), 0) || 0} series
+                    {t('workout.stats', {
+                      exercises: activeWorkout.exerciseLogs?.length || 0,
+                      sets: activeWorkout.exerciseLogs?.reduce((s, e) => s + (e.sets?.length || 0), 0) || 0,
+                    })}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -288,12 +293,12 @@ export function WorkoutPage() {
                     onClick={() => setShowExerciseSearch(true)}
                     className="flex items-center gap-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 px-3 py-1.5 rounded-lg text-xs transition-colors"
                   >
-                    <Plus size={14} /> Ejercicio
+                    <Plus size={14} /> {t('workout.addExerciseShort')}
                   </button>
                   <button
                     type="button"
                     onClick={() => deleteWorkoutMutation.mutate(activeWorkout.id)}
-                    aria-label="Eliminar entrenamiento"
+                    aria-label={t('workout.deleteWorkoutAria')}
                     className="p-1.5 rounded-lg bg-red-900/20 hover:bg-red-900/40 text-red-400 transition-colors"
                   >
                     <Trash2 size={14} />
@@ -303,12 +308,12 @@ export function WorkoutPage() {
 
               {(!activeWorkout.exerciseLogs || activeWorkout.exerciseLogs.length === 0) ? (
                 <div className="text-center py-8">
-                  <p className="text-slate-400 text-sm">Sin ejercicios. Añade el primero.</p>
+                  <p className="text-slate-400 text-sm">{t('workout.noExercises')}</p>
                   <button
                     onClick={() => setShowExerciseSearch(true)}
                     className="mt-3 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm transition-colors"
                   >
-                    + Añadir ejercicio
+                    {t('workout.addExerciseCta')}
                   </button>
                 </div>
               ) : (
@@ -366,7 +371,7 @@ export function WorkoutPage() {
           ) : routinesError ? (
             <div className="glass border border-red-500/20 rounded-2xl">
               <QueryError
-                message="No se pudo cargar tus rutinas."
+                message={t('workout.errLoadRoutines')}
                 onRetry={() => void refetchRoutines()}
               />
             </div>
@@ -389,7 +394,7 @@ export function WorkoutPage() {
 
       <AnimatePresence>
         {showExerciseSearch && (
-          <Modal title="Añadir ejercicio" onClose={() => setShowExerciseSearch(false)}>
+          <Modal title={t('workout.addExerciseModal')} onClose={() => setShowExerciseSearch(false)}>
             <ExerciseSearch
               onSelect={(exercise) => {
                 if (activeWorkout) addExerciseMutation.mutate({ workoutId: activeWorkout.id, exercise });
@@ -416,7 +421,7 @@ export function WorkoutPage() {
               className="w-full max-w-sm glass border border-white/10 rounded-2xl p-5 space-y-4"
             >
               <div>
-                <h3 className="text-white font-semibold">¿Qué día entrenas hoy?</h3>
+                <h3 className="text-white font-semibold">{t('workout.pickDayTitle')}</h3>
                 <p className="text-slate-400 text-xs mt-1">{startingRoutine.name}</p>
               </div>
               <div className="space-y-2">
@@ -432,14 +437,14 @@ export function WorkoutPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-white text-sm font-medium">{day.dayName}</p>
-                      <p className="text-slate-500 text-xs">{day.exercises.length} ejercicios</p>
+                      <p className="text-slate-500 text-xs">{t('workout.exercisesCount', { count: day.exercises.length })}</p>
                     </div>
                     <Play size={14} className="text-indigo-400" />
                   </button>
                 ))}
               </div>
               <button onClick={() => setStartingRoutine(null)} className="w-full py-2 text-slate-400 text-sm hover:text-white transition-colors">
-                Cancelar
+                {t('common.cancel')}
               </button>
             </motion.div>
           </motion.div>
@@ -460,16 +465,17 @@ function WorkoutHub({
   hasSavedRoutines: boolean;
   isCreating: boolean;
 }) {
+  const { t } = useTranslation();
   const isToday = date === todayString();
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       {!isToday && (
-        <EmptyState icon="📅" title="Sin entrenamientos" description={`No hay entrenamientos registrados para este día`} />
+        <EmptyState icon="📅" title={t('workout.emptyPastTitle')} description={t('workout.emptyPastDesc')} />
       )}
       {isToday && (
         <>
-          <p className="text-slate-400 text-sm text-center">¿Cómo quieres entrenar hoy?</p>
+          <p className="text-slate-400 text-sm text-center">{t('workout.hubPrompt')}</p>
           <div className="grid gap-3">
 
             <motion.button
@@ -483,8 +489,8 @@ function WorkoutHub({
                   <Zap size={22} className="text-indigo-400" />
                 </div>
                 <div>
-                  <p className="text-white font-semibold">Entrenamiento libre</p>
-                  <p className="text-slate-400 text-xs mt-0.5">Improvisado, sin plantilla. Añade ejercicios sobre la marcha.</p>
+                  <p className="text-white font-semibold">{t('workout.freeTitle')}</p>
+                  <p className="text-slate-400 text-xs mt-0.5">{t('workout.freeDesc')}</p>
                 </div>
               </div>
             </motion.button>
@@ -500,8 +506,8 @@ function WorkoutHub({
                     <BookOpen size={22} className="text-purple-400" />
                   </div>
                   <div>
-                    <p className="text-white font-semibold">Usar rutina guardada</p>
-                    <p className="text-slate-400 text-xs mt-0.5">Inicia un entrenamiento desde una de tus rutinas.</p>
+                    <p className="text-white font-semibold">{t('workout.useSavedTitle')}</p>
+                    <p className="text-slate-400 text-xs mt-0.5">{t('workout.useSavedDesc')}</p>
                   </div>
                 </div>
               </motion.button>
@@ -517,8 +523,8 @@ function WorkoutHub({
                   <Pencil size={22} className="text-green-400" />
                 </div>
                 <div>
-                  <p className="text-white font-semibold">Crear nueva rutina</p>
-                  <p className="text-slate-400 text-xs mt-0.5">Diseña tu propio programa personalizado y guárdalo.</p>
+                  <p className="text-white font-semibold">{t('workout.createRoutineTitle')}</p>
+                  <p className="text-slate-400 text-xs mt-0.5">{t('workout.createRoutineDesc')}</p>
                 </div>
               </div>
             </motion.button>
@@ -533,8 +539,8 @@ function WorkoutHub({
                   <Compass size={22} className="text-cyan-400" />
                 </div>
                 <div>
-                  <p className="text-white font-semibold">Explorar rutinas</p>
-                  <p className="text-slate-400 text-xs mt-0.5">PPL, Full Body, Upper/Lower y más programas curados.</p>
+                  <p className="text-white font-semibold">{t('workout.exploreTitle')}</p>
+                  <p className="text-slate-400 text-xs mt-0.5">{t('workout.exploreDesc')}</p>
                 </div>
               </div>
             </motion.button>
@@ -555,6 +561,7 @@ function SavedRoutinesList({
   onStart: (routine: Routine) => void;
   isDeleting: boolean;
 }) {
+  const { t } = useTranslation();
   const [expandedId, setExpandedId] = useState<number | string | null>(null);
 
   return (
@@ -565,27 +572,27 @@ function SavedRoutinesList({
           onClick={onCreate}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-sm transition-colors"
         >
-          <Pencil size={15} /> Crear rutina
+          <Pencil size={15} /> {t('workout.createRoutine')}
         </button>
         <button
           onClick={onExplore}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-sm transition-colors"
         >
-          <Compass size={15} /> Explorar
+          <Compass size={15} /> {t('workout.explore')}
         </button>
       </div>
 
       {routines.length === 0 ? (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10 space-y-3">
           <p className="text-4xl">📋</p>
-          <p className="text-white font-semibold">Sin rutinas guardadas</p>
-          <p className="text-slate-400 text-sm">Crea tu primera rutina o explora programas populares</p>
+          <p className="text-white font-semibold">{t('workout.emptyRoutinesTitle')}</p>
+          <p className="text-slate-400 text-sm">{t('workout.emptyRoutinesDesc')}</p>
           <div className="flex gap-2 justify-center pt-2">
             <button onClick={onCreate} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-xl transition-colors">
-              Crear rutina
+              {t('workout.createRoutine')}
             </button>
             <button onClick={onExplore} className="px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300 text-sm rounded-xl transition-colors">
-              Explorar
+              {t('workout.explore')}
             </button>
           </div>
         </motion.div>
@@ -609,9 +616,9 @@ function SavedRoutinesList({
                             ? 'bg-cyan-900/40 text-cyan-400'
                             : 'bg-indigo-900/40 text-indigo-400'
                         }`}>
-                          {routine.source === 'explore' ? '✦ Curada' : '✎ Propia'}
+                          {routine.source === 'explore' ? t('workout.badgeCurated') : t('workout.badgeOwn')}
                         </span>
-                        <span className="text-slate-500 text-[10px]">{routine.daysPerWeek} días/sem</span>
+                        <span className="text-slate-500 text-[10px]">{t('workout.daysPerWeek', { days: routine.daysPerWeek })}</span>
                       </div>
                       <p className="text-white font-semibold text-sm">{routine.name}</p>
                       {routine.description && (
@@ -630,7 +637,7 @@ function SavedRoutinesList({
                       onClick={() => onStart(routine)}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors"
                     >
-                      <Play size={13} /> Empezar hoy
+                      <Play size={13} /> {t('workout.startToday')}
                     </button>
                     <button
                       onClick={() => onDelete(routine.id)}
@@ -677,25 +684,29 @@ function SavedRoutinesList({
     </div>
   );
 }
-const REST_OPTIONS = [
-  { value: 0, label: 'Sin descanso' },
-  ...Array.from({ length: 20 }, (_, i) => {
-    const value = (i + 1) * 15;
-    const m = Math.floor(value / 60);
-    const s = value % 60;
-    return {
-      value,
-      label: `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`,
-    };
-  }),
-];
+function buildRestOptions(restNoneLabel: string) {
+  return [
+    { value: 0, label: restNoneLabel },
+    ...Array.from({ length: 20 }, (_, i) => {
+      const value = (i + 1) * 15;
+      const m = Math.floor(value / 60);
+      const s = value % 60;
+      return {
+        value,
+        label: `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`,
+      };
+    }),
+  ];
+}
 
-const SET_TYPE_OPTIONS: { value: NonNullable<ExerciseSet['setType']>; label: string; badge: string }[] = [
-  { value: 'warmup', label: 'Calentamiento', badge: 'W' },
-  { value: 'normal', label: 'Normal', badge: '1' },
-  { value: 'failure', label: 'Al fallo', badge: 'F' },
-  { value: 'drop', label: 'Drop', badge: 'D' },
-];
+function buildSetTypeOptions(t: (key: string) => string): { value: NonNullable<ExerciseSet['setType']>; label: string; badge: string }[] {
+  return [
+    { value: 'warmup', label: t('workout.setWarmup'), badge: 'W' },
+    { value: 'normal', label: t('workout.setNormal'), badge: '1' },
+    { value: 'failure', label: t('workout.setFailure'), badge: 'F' },
+    { value: 'drop', label: t('workout.setDrop'), badge: 'D' },
+  ];
+}
 
 function formatRest(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -712,6 +723,7 @@ function setBadge(set: ExerciseSet, normalIndex: number) {
 }
 
 function RestTimer({ seconds, onDone }: { seconds: number; onDone: () => void }) {
+  const { t } = useTranslation();
   const [left, setLeft] = useState(seconds);
 
   useEffect(() => {
@@ -732,7 +744,7 @@ function RestTimer({ seconds, onDone }: { seconds: number; onDone: () => void })
   return (
     <div className="rounded-xl border border-indigo-500/30 bg-indigo-950/40 p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-xs font-medium text-indigo-300">Descanso</p>
+        <p className="text-xs font-medium text-indigo-300">{t('workout.rest')}</p>
         <span className="font-mono text-lg font-bold tabular-nums text-white">{formatRest(left)}</span>
       </div>
       <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-white/10">
@@ -743,7 +755,7 @@ function RestTimer({ seconds, onDone }: { seconds: number; onDone: () => void })
         onClick={onDone}
         className="w-full rounded-lg bg-white/10 py-1.5 text-xs text-slate-300 transition-colors hover:bg-white/15"
       >
-        Saltar
+        {t('workout.restSkip')}
       </button>
     </div>
   );
@@ -776,6 +788,8 @@ function ExerciseCard({
   onUpdateExercise: (data: Record<string, unknown>) => void;
   onDelete: () => void;
 }) {
+  const { t } = useTranslation();
+  const restOptions = useMemo(() => buildRestOptions(t('workout.restNone')), [t]);
   const [collapsed, setCollapsed] = useState(false);
   const [note, setNote] = useState(exercise.notes || '');
   const [restTimer, setRestTimer] = useState<number | null>(null);
@@ -859,8 +873,10 @@ function ExerciseCard({
         <button type="button" className="flex-1 text-left" onClick={() => setCollapsed(!collapsed)}>
           <p className="text-sm font-medium text-white">{exercise.exerciseName}</p>
           <p className="text-xs text-slate-500">
-            {exercise.muscleGroup && `${exercise.muscleGroup} · `}
-            {exercise.sets?.length || 0} series{totalVolume > 0 && ` · ${Math.round(totalVolume)}kg vol.`}
+            {(exercise.category || exercise.muscleGroup) &&
+              `${translateExerciseCategory(exercise.category || exercise.muscleGroup, t)} · `}
+            {t('workout.setsCount', { count: exercise.sets?.length || 0 })}
+            {totalVolume > 0 && t('workout.volumeSuffix', { volume: Math.round(totalVolume) })}
           </p>
         </button>
         <div className="flex flex-col gap-0.5">
@@ -868,7 +884,7 @@ function ExerciseCard({
             type="button"
             onClick={onMoveUp}
             disabled={!canMoveUp}
-            aria-label="Subir ejercicio"
+            aria-label={t('workout.moveUp')}
             className="p-0.5 text-slate-500 transition-colors hover:text-white disabled:opacity-20 disabled:hover:text-slate-500"
           >
             <ChevronUp size={14} />
@@ -877,7 +893,7 @@ function ExerciseCard({
             type="button"
             onClick={onMoveDown}
             disabled={!canMoveDown}
-            aria-label="Bajar ejercicio"
+            aria-label={t('workout.moveDown')}
             className="p-0.5 text-slate-500 transition-colors hover:text-white disabled:opacity-20 disabled:hover:text-slate-500"
           >
             <ChevronDown size={14} />
@@ -886,7 +902,7 @@ function ExerciseCard({
         <button
           type="button"
           onClick={onDelete}
-          aria-label={`Eliminar ${exercise.exerciseName}`}
+          aria-label={t('workout.deleteExerciseAria', { name: exercise.exerciseName })}
           className="p-1 text-slate-400 transition-colors hover:text-red-400"
         >
           <Trash2 size={14} />
@@ -896,25 +912,25 @@ function ExerciseCard({
       {!collapsed && (
         <div className="space-y-3 border-t border-white/5 px-4 pb-4 pt-3">
           <div>
-            <label className="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Nota</label>
+            <label className="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">{t('workout.note')}</label>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Añadir nota fijada"
+              placeholder={t('workout.notePlaceholder')}
               className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-xs text-slate-400">
-              <span>Descanso</span>
+              <span>{t('workout.rest')}</span>
               <select
                 value={restSeconds}
                 onChange={(e) => onUpdateExercise({ restSeconds: parseInt(e.target.value, 10) })}
                 className="rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
               >
-                {REST_OPTIONS.map((o) => (
+                {restOptions.map((o) => (
                   <option key={o.value} value={o.value} className="bg-[#14171c]">
                     {o.label}
                   </option>
@@ -934,14 +950,14 @@ function ExerciseCard({
           )}
 
           <div className="grid grid-cols-12 gap-2 px-1 text-[10px] uppercase tracking-wide text-slate-500">
-            <span className="col-span-2">Serie</span>
-            <span className="col-span-3">Kg</span>
+            <span className="col-span-2">{t('workout.colSet')}</span>
+            <span className="col-span-3">{t('workout.colKg')}</span>
             <button
               type="button"
               className="col-span-4 flex items-center gap-0.5 text-left hover:text-indigo-400"
               onClick={() => onUpdateExercise({ repMode: repMode === 'reps' ? 'range' : 'reps' })}
             >
-              {repMode === 'range' ? 'Intervalo' : 'Reps'}
+              {repMode === 'range' ? t('workout.colRange') : t('workout.colReps')}
               <ChevronDown size={10} />
             </button>
             <span className="col-span-2">✓</span>
@@ -980,7 +996,7 @@ function ExerciseCard({
             }
             className="flex w-full items-center justify-center gap-1 rounded-xl border border-dashed border-white/10 py-2 text-xs text-slate-500 transition-colors hover:border-indigo-500/30 hover:text-indigo-400"
           >
-            <Plus size={12} /> Agregar serie
+            <Plus size={12} /> {t('workout.addSet')}
           </button>
         </div>
       )}
@@ -1011,6 +1027,8 @@ function SetRow({
   onDelete: () => void;
   onWeightCheck: (w: number) => void;
 }) {
+  const { t } = useTranslation();
+  const setTypeOptions = useMemo(() => buildSetTypeOptions(t), [t]);
   const [weight, setWeight] = useState(String(set.weight ?? ''));
   const [reps, setReps] = useState(String(set.reps ?? ''));
   const [repsMin, setRepsMin] = useState(String(set.repsMin ?? ''));
@@ -1073,7 +1091,9 @@ function SetRow({
           type="button"
           data-set-type-trigger
           onClick={onToggleType}
-          aria-label={`Tipo de serie: ${SET_TYPE_OPTIONS.find((o) => o.value === currentType)?.label || 'Normal'}`}
+          aria-label={t('workout.setTypeAria', {
+            type: setTypeOptions.find((o) => o.value === currentType)?.label || t('workout.setNormal'),
+          })}
           aria-haspopup="menu"
           aria-expanded={typeOpen}
           className={`flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 text-xs font-bold ${typeColor}`}
@@ -1085,7 +1105,7 @@ function SetRow({
             data-set-type-menu
             className="absolute left-0 bottom-full z-50 mb-1 w-44 rounded-xl border border-white/10 bg-[#1b1f27] py-1 shadow-xl"
           >
-            {SET_TYPE_OPTIONS.map((opt) => (
+            {setTypeOptions.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
@@ -1110,7 +1130,7 @@ function SetRow({
           onBlur={handleBlur}
           placeholder="0"
           step="0.5"
-          aria-label="Peso en kg"
+          aria-label={t('workout.weightAria')}
           className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-center text-xs text-white focus:border-indigo-500 focus:outline-none"
         />
       </div>
@@ -1122,7 +1142,7 @@ function SetRow({
             onChange={(e) => setRepsMin(e.target.value)}
             onBlur={handleBlur}
             placeholder="8"
-            aria-label="Repeticiones mínimas"
+            aria-label={t('workout.repsMinAria')}
             className="w-full rounded-lg border border-white/10 bg-white/5 px-1 py-1.5 text-center text-xs text-white focus:border-indigo-500 focus:outline-none"
           />
           <span className="text-slate-400" aria-hidden>-</span>
@@ -1132,7 +1152,7 @@ function SetRow({
             onChange={(e) => setRepsMax(e.target.value)}
             onBlur={handleBlur}
             placeholder="10"
-            aria-label="Repeticiones máximas"
+            aria-label={t('workout.repsMaxAria')}
             className="w-full rounded-lg border border-white/10 bg-white/5 px-1 py-1.5 text-center text-xs text-white focus:border-indigo-500 focus:outline-none"
           />
         </div>
@@ -1144,7 +1164,7 @@ function SetRow({
             onChange={(e) => setReps(e.target.value)}
             onBlur={handleBlur}
             placeholder="0"
-            aria-label="Repeticiones"
+            aria-label={t('workout.repsAria')}
             className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-center text-xs text-white focus:border-indigo-500 focus:outline-none"
           />
         </div>
@@ -1152,7 +1172,7 @@ function SetRow({
       <button
         type="button"
         onClick={toggleCompleted}
-        aria-label={completed ? 'Marcar serie incompleta' : 'Marcar serie completada'}
+        aria-label={completed ? t('workout.markIncomplete') : t('workout.markComplete')}
         aria-pressed={completed}
         className={`col-span-2 flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
           completed ? 'bg-green-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-green-900/30 hover:text-green-400'
@@ -1163,7 +1183,7 @@ function SetRow({
       <button
         type="button"
         onClick={onDelete}
-        aria-label="Eliminar serie"
+        aria-label={t('workout.deleteSetAria')}
         className="col-span-1 flex items-center justify-center text-slate-400 transition-colors hover:text-red-400"
       >
         <X size={12} />

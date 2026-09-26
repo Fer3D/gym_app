@@ -1,37 +1,30 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ChevronRight } from 'lucide-react';
 import { exerciseApi } from '../../lib/api';
 import type { Exercise } from '../../lib/utils';
-import { EXERCISE_CATEGORY_ICONS, exerciseCategoryIcon } from '../../lib/utils';
+import { EXERCISE_CATEGORY_ICONS, exerciseCategoryIcon, translateExerciseCategory } from '../../lib/utils';
 import { Spinner, QueryError } from '../common/UI';
 
 interface ExerciseSearchProps {
   onSelect: (exercise: Exercise) => void;
 }
 
-const CATEGORY_ES: Record<string, string> = {
-  'Abs': 'Abdominales',
-  'Arms': 'Brazos',
-  'Back': 'Espalda',
-  'Calves': 'Gemelos',
-  'Cardio': 'Cardio',
-  'Chest': 'Pecho',
-  'Legs': 'Piernas',
-  'Shoulders': 'Hombros',
-};
-
 export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const categoryLabel = (name: string) => translateExerciseCategory(name, t);
+
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedQ(query), 400);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setDebouncedQ(query), 400);
+    return () => clearTimeout(timer);
   }, [query]);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
@@ -68,7 +61,7 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
             type="text"
             value={query}
             onChange={(e) => { setQuery(e.target.value); setPage(1); }}
-            placeholder="Buscar ejercicio... (p.ej. sentadilla, press)"
+            placeholder={t('exerciseSearch.placeholder')}
             className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-9 py-2.5 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
           />
           {query && (
@@ -84,7 +77,7 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
               onClick={() => { setSelectedCategory(null); setPage(1); }}
               className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${!selectedCategory ? 'bg-indigo-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
             >
-              Todos
+              {t('exerciseSearch.all')}
             </button>
             {(categories || []).map((cat: any) => (
               <button
@@ -93,7 +86,7 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
                 className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedCategory === cat.name ? 'bg-indigo-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
               >
                 <span>{EXERCISE_CATEGORY_ICONS[cat.name] || '🏋️'}</span>
-                {CATEGORY_ES[cat.name] || cat.name}
+                {categoryLabel(cat.name)}
               </button>
             ))}
           </div>
@@ -103,7 +96,7 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
         {listFailed ? (
           <QueryError
-            message="No se pudo cargar ejercicios."
+            message={t('exerciseSearch.loadError')}
             onRetry={() => void refetch()}
             className="py-8"
           />
@@ -133,7 +126,7 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
                     <div className="flex flex-wrap gap-1 mt-1">
                       {ex.category && (
                         <span className="text-[10px] bg-indigo-900/40 text-indigo-400 px-1.5 py-0.5 rounded-full">
-                          {CATEGORY_ES[ex.category] || ex.category}
+                          {categoryLabel(ex.category)}
                         </span>
                       )}
                       {(ex.muscles || []).slice(0, 2).map((m) => (
@@ -150,7 +143,7 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
 
             {exercises.length === 0 && (
               <p className="text-center text-slate-500 text-sm py-8">
-                {debouncedQ ? 'Sin resultados' : 'No hay ejercicios'}
+                {debouncedQ ? t('exerciseSearch.emptySearch') : t('exerciseSearch.emptyList')}
               </p>
             )}
 
@@ -161,15 +154,15 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
                   disabled={page === 1}
                   className="px-3 py-1.5 rounded-lg bg-white/5 text-slate-300 text-xs disabled:opacity-30 hover:bg-white/10 transition-colors"
                 >
-                  ← Anterior
+                  {t('exerciseSearch.prev')}
                 </button>
-                <span className="text-slate-400 text-xs">{page} / {data.pages}</span>
+                <span className="text-slate-400 text-xs">{t('exerciseSearch.page', { page, pages: data.pages })}</span>
                 <button
                   onClick={() => setPage(Math.min(data.pages, page + 1))}
                   disabled={page === data.pages}
                   className="px-3 py-1.5 rounded-lg bg-white/5 text-slate-300 text-xs disabled:opacity-30 hover:bg-white/10 transition-colors"
                 >
-                  Siguiente →
+                  {t('exerciseSearch.next')}
                 </button>
               </div>
             )}

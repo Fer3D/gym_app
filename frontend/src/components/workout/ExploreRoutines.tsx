@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, ChevronDown, ChevronUp, Play, Bookmark, Check } from 'lucide-react';
@@ -17,11 +18,6 @@ const LEVEL_COLORS: Record<string, string> = {
   intermediate: 'bg-amber-900/40 text-amber-400',
   advanced: 'bg-red-900/40 text-red-400',
 };
-const LEVEL_LABELS: Record<string, string> = {
-  beginner: 'Principiante',
-  intermediate: 'Intermedio',
-  advanced: 'Avanzado',
-};
 
 const CATEGORY_COLORS: Record<string, string> = {
   'fuerza': 'bg-indigo-900/40 text-indigo-400',
@@ -33,10 +29,17 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesProps) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [startingRoutine, setStartingRoutine] = useState<{ id: string; dayIndex: number } | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+
+  const levelLabel = (level: string) => {
+    const key = `explore.${level}`;
+    const translated = t(key);
+    return translated === key ? level : translated;
+  };
 
   const { data: routines = [], isLoading, isError, refetch } = useQuery<Routine[]>({
     queryKey: ['explore-routines'],
@@ -82,7 +85,7 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
   if (isError) {
     return (
       <QueryError
-        message="No se pudo cargar las rutinas explorables."
+        message={t('explore.loadError')}
         onRetry={() => void refetch()}
         className="py-16"
       />
@@ -95,18 +98,18 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
         <MutationError
           message={
             saveMutation.isError
-              ? 'No se pudo guardar la rutina.'
-              : 'No se pudo iniciar el entrenamiento.'
+              ? t('explore.saveError')
+              : t('explore.startError')
           }
         />
       )}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Explorar rutinas</h2>
-          <p className="text-slate-400 text-xs mt-0.5">{routines.length} programas de entrenamiento</p>
+          <h2 className="text-xl font-bold text-white">{t('explore.title')}</h2>
+          <p className="text-slate-400 text-xs mt-0.5">{t('explore.subtitle', { count: routines.length })}</p>
         </div>
         <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors text-sm">
-          Volver
+          {t('explore.back')}
         </button>
       </div>
 
@@ -130,10 +133,10 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1.5">
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${LEVEL_COLORS[routine.level] || 'bg-white/10 text-slate-400'}`}>
-                        {LEVEL_LABELS[routine.level] || routine.level}
+                        {levelLabel(routine.level)}
                       </span>
                       <span className="text-[10px] bg-white/5 text-slate-400 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <BookOpen size={9} /> {routine.daysPerWeek} días/sem
+                        <BookOpen size={9} /> {t('explore.daysPerWeek', { days: routine.daysPerWeek })}
                       </span>
                       {(routine.tags || []).map((tag) => (
                         <span key={tag} className={`text-[10px] px-2 py-0.5 rounded-full ${CATEGORY_COLORS[tag] || 'bg-white/5 text-slate-400'}`}>
@@ -154,7 +157,7 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
                     className="flex-1 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs transition-colors flex items-center justify-center gap-1.5"
                   >
                     {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                    {isExpanded ? 'Ocultar' : 'Ver ejercicios'}
+                    {isExpanded ? t('explore.hideExercises') : t('explore.showExercises')}
                   </button>
                   <button
                     onClick={() => !isSaved && saveMutation.mutate(routine)}
@@ -166,7 +169,7 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
                     }`}
                   >
                     {isSaved ? <Check size={13} /> : <Bookmark size={13} />}
-                    {isSaved ? 'Guardada' : 'Guardar'}
+                    {isSaved ? t('explore.saved') : t('explore.save')}
                   </button>
                   <button
                     onClick={() =>
@@ -178,7 +181,7 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
                     className="py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs transition-colors flex items-center gap-1.5"
                   >
                     <Play size={12} />
-                    {startMutation.isPending && isStarting ? 'Iniciando...' : 'Empezar'}
+                    {startMutation.isPending && isStarting ? t('explore.starting') : t('explore.start')}
                   </button>
                 </div>
               </div>
@@ -237,7 +240,7 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
               className="w-full max-w-sm glass border border-white/10 rounded-2xl p-5 space-y-4"
             >
               <div>
-                <h3 className="text-white font-semibold">¿Qué día entrenas hoy?</h3>
+                <h3 className="text-white font-semibold">{t('explore.pickDayTitle')}</h3>
                 <p className="text-slate-400 text-xs mt-1">
                   {routines.find((r) => String(r.id) === startingRoutine.id)?.name}
                 </p>
@@ -257,7 +260,7 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-white text-sm font-medium">{day.dayName}</p>
-                        <p className="text-slate-500 text-xs">{day.exercises.length} ejercicios</p>
+                        <p className="text-slate-500 text-xs">{t('explore.exercisesCount', { count: day.exercises.length })}</p>
                       </div>
                       <Play size={14} className="text-indigo-400 flex-shrink-0" />
                     </button>
@@ -267,7 +270,7 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
                 onClick={() => setStartingRoutine(null)}
                 className="w-full py-2 text-slate-400 text-sm hover:text-white transition-colors"
               >
-                Cancelar
+                {t('explore.cancel')}
               </button>
             </motion.div>
           </motion.div>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, Package, RefreshCw, Zap, Clock } from 'lucide-react';
@@ -16,6 +17,7 @@ interface FoodSearchProps {
 type SearchState = 'idle' | 'loading' | 'streaming' | 'done' | 'error';
 
 export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [selected, setSelected] = useState<FoodProduct | null>(null);
@@ -94,7 +96,7 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
         }
       } catch {
         finishedRef.current = true;
-        setErrorMsg('Respuesta inválida del servidor');
+        setErrorMsg(t('foodSearch.invalidResponse'));
         setSearchState('error');
         es.close();
       }
@@ -106,11 +108,11 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
         return;
       }
       finishedRef.current = true;
-      setErrorMsg('Open Food Facts no disponible. Reintenta.');
+      setErrorMsg(t('foodSearch.offUnavailable'));
       setSearchState('error');
       es.close();
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (debouncedQ.length > 1) {
@@ -149,7 +151,7 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
         </div>
 
         <div>
-          <label className="text-slate-400 text-xs block mb-1">Cantidad (gramos)</label>
+          <label className="text-slate-400 text-xs block mb-1">{t('foodSearch.quantity')}</label>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setQuantity(Math.max(10, quantity - 10))}
@@ -172,7 +174,7 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
               onClick={() => setQuantity(selected.servingSize!)}
               className="mt-1.5 text-indigo-400 text-xs hover:text-indigo-300 transition-colors"
             >
-              Usar ración: {selected.servingSize}g
+              {t('foodSearch.useServing', { grams: selected.servingSize })}
             </button>
           )}
         </div>
@@ -198,13 +200,13 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
             onClick={() => setSelected(null)}
             className="flex-1 py-2.5 rounded-xl bg-white/5 text-slate-300 text-sm hover:bg-white/10 transition-colors"
           >
-            ← Volver
+            {t('foodSearch.back')}
           </button>
           <button
             onClick={() => { if (macros) onSelect(selected, quantity); }}
             className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 transition-colors"
           >
-            Añadir al {mealLabel}
+            {t('foodSearch.addToMeal', { meal: mealLabel })}
           </button>
         </div>
       </div>
@@ -223,7 +225,7 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar alimentos... (p.ej. pollo, arroz)"
+              placeholder={t('foodSearch.placeholder')}
               className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-9 py-2.5 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
             />
             {query && (
@@ -237,7 +239,7 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
             <button
               onClick={() => startSearch(debouncedQ, true)}
               disabled={isSearching}
-              title="Forzar actualización (ignorar caché)"
+              title={t('foodSearch.forceRefresh')}
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40"
             >
               <RefreshCw size={15} className={isSearching ? 'animate-spin' : ''} />
@@ -250,17 +252,19 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
             <span className="flex items-center gap-1 text-slate-500">
               {isSearching && (
                 <><span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse inline-block" />
-                Buscando{products.length > 0 ? ` (${products.length} encontrados…)` : '…'}</>
+                {products.length > 0
+                  ? t('foodSearch.searchingCount', { count: products.length })
+                  : t('foodSearch.searching')}</>
               )}
               {searchState === 'done' && wasCached && (
                 <><Zap size={11} className="text-green-400" />
-                <span className="text-green-400">Por popularidad</span>
+                <span className="text-green-400">{t('foodSearch.byPopularity')}</span>
                 {cacheTTL > 0 && <><Clock size={10} className="text-slate-600 ml-1" /><span className="text-slate-600">{Math.round(cacheTTL / 60)}min</span></>}</>
               )}
               {searchState === 'done' && !wasCached && products.length > 0 && (
-                <span className="text-slate-500">{products.length} por popularidad</span>
+                <span className="text-slate-500">{t('foodSearch.countByPopularity', { count: products.length })}</span>
               )}
-              {searchState === 'error' && <span className="text-red-400">{errorMsg || 'Error al buscar'}</span>}
+              {searchState === 'error' && <span className="text-red-400">{errorMsg || t('foodSearch.searchError')}</span>}
             </span>
             {(searchState === 'done' && wasCached) || searchState === 'error' ? (
               <button
@@ -268,20 +272,20 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
                 onClick={() => startSearch(debouncedQ, true)}
                 className="text-indigo-500 hover:text-indigo-400 transition-colors"
               >
-                {searchState === 'error' ? 'Reintentar' : 'Actualizar'}
+                {searchState === 'error' ? t('common.retry') : t('foodSearch.refresh')}
               </button>
             ) : null}
           </div>
         )}
         {!debouncedQ && (
-          <p className="text-slate-500 text-xs text-center">Mostrando alimentos populares</p>
+          <p className="text-slate-500 text-xs text-center">{t('foodSearch.popularHint')}</p>
         )}
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
         {debouncedQ.length <= 1 && popularError ? (
           <QueryError
-            message="No se pudo cargar alimentos populares."
+            message={t('foodSearch.popularError')}
             onRetry={() => void refetchPopular()}
             className="py-8"
           />
@@ -309,8 +313,8 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
 
             {searchState === 'done' && products.length === 0 && debouncedQ.length > 1 && (
               <div className="text-center py-8">
-                <p className="text-slate-400 text-sm">No se encontraron resultados para "{debouncedQ}"</p>
-                <p className="text-slate-500 text-xs mt-1">Prueba con otro término o recarga</p>
+                <p className="text-slate-400 text-sm">{t('foodSearch.noResults', { query: debouncedQ })}</p>
+                <p className="text-slate-500 text-xs mt-1">{t('foodSearch.noResultsHint')}</p>
               </div>
             )}
 
@@ -337,14 +341,14 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-indigo-400 text-sm font-bold">{p.per100g.calories}</p>
-                    <p className="text-slate-500 text-[10px]">kcal/100g</p>
+                    <p className="text-slate-500 text-[10px]">{t('foodSearch.kcalPer100')}</p>
                   </div>
                 </motion.button>
               ))}
             </AnimatePresence>
 
             {debouncedQ.length <= 1 && !popularLoading && displayProducts.length === 0 && (
-              <p className="text-center text-slate-500 text-sm py-8">No hay alimentos populares ahora</p>
+              <p className="text-center text-slate-500 text-sm py-8">{t('foodSearch.noPopular')}</p>
             )}
 
             {searchState === 'streaming' && products.length > 0 && (

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, ChevronDown, ChevronUp, GripVertical, Save } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -13,23 +14,20 @@ interface RoutineBuilderProps {
   onCancel: () => void;
 }
 
-const LEVEL_LABELS: Record<string, string> = {
-  beginner: 'Principiante',
-  intermediate: 'Intermedio',
-  advanced: 'Avanzado',
-};
-
 export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [level, setLevel] = useState('intermediate');
-  const [days, setDays] = useState<RoutineDay[]>([
-    { day: 1, dayName: 'Día 1', exercises: [] },
+  const [days, setDays] = useState<RoutineDay[]>(() => [
+    { day: 1, dayName: t('routineBuilder.dayName', { number: 1 }), exercises: [] },
   ]);
   const [expandedDay, setExpandedDay] = useState(0);
   const [showExerciseSearch, setShowExerciseSearch] = useState<number | null>(null);
+
+  const levelKeys = ['beginner', 'intermediate', 'advanced'] as const;
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -50,7 +48,7 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
   const addDay = () => {
     setDays((prev) => [
       ...prev,
-      { day: prev.length + 1, dayName: `Día ${prev.length + 1}`, exercises: [] },
+      { day: prev.length + 1, dayName: t('routineBuilder.dayName', { number: prev.length + 1 }), exercises: [] },
     ]);
     setExpandedDay(days.length);
   };
@@ -60,8 +58,8 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
     if (expandedDay >= idx) setExpandedDay(Math.max(0, expandedDay - 1));
   };
 
-  const updateDayName = (idx: number, name: string) => {
-    setDays((prev) => prev.map((d, i) => (i === idx ? { ...d, dayName: name } : d)));
+  const updateDayName = (idx: number, dayName: string) => {
+    setDays((prev) => prev.map((d, i) => (i === idx ? { ...d, dayName } : d)));
   };
 
   const addExercise = (dayIdx: number, exercise: Exercise) => {
@@ -113,31 +111,37 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Nueva rutina</h2>
-          <p className="text-slate-400 text-xs mt-0.5">{days.length} día{days.length !== 1 ? 's' : ''} · {totalExercises} ejercicios</p>
+          <h2 className="text-xl font-bold text-white">{t('routineBuilder.title')}</h2>
+          <p className="text-slate-400 text-xs mt-0.5">
+            {t('routineBuilder.summary', {
+              days: days.length,
+              dayPlural: days.length !== 1 ? 's' : '',
+              exercises: totalExercises,
+            })}
+          </p>
         </div>
         <button onClick={onCancel} className="text-slate-500 hover:text-white transition-colors text-sm">
-          Cancelar
+          {t('routineBuilder.cancel')}
         </button>
       </div>
 
       <div className="glass border border-white/5 rounded-2xl p-4 space-y-3">
         <input
           type="text"
-          placeholder="Nombre de la rutina *"
+          placeholder={t('routineBuilder.namePlaceholder')}
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
         />
         <textarea
-          placeholder="Descripción (opcional)"
+          placeholder={t('routineBuilder.descPlaceholder')}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={2}
           className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
         />
         <div className="flex gap-2">
-          {Object.entries(LEVEL_LABELS).map(([val, label]) => (
+          {levelKeys.map((val) => (
             <button
               key={val}
               onClick={() => setLevel(val)}
@@ -147,7 +151,7 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
                   : 'bg-white/5 text-slate-400 hover:bg-white/10'
               }`}
             >
-              {label}
+              {t(`routineBuilder.${val}`)}
             </button>
           ))}
         </div>
@@ -165,7 +169,9 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
                 onChange={(e) => updateDayName(dayIdx, e.target.value)}
                 className="flex-1 bg-transparent text-white text-sm font-medium focus:outline-none placeholder:text-slate-500"
               />
-              <span className="text-slate-500 text-xs flex-shrink-0">{day.exercises.length} ejerc.</span>
+              <span className="text-slate-500 text-xs flex-shrink-0">
+                {t('routineBuilder.exerciseAbbr', { count: day.exercises.length })}
+              </span>
               <button
                 onClick={() => removeDay(dayIdx)}
                 disabled={days.length === 1}
@@ -191,7 +197,7 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
                 >
                   <div className="p-4 pt-3 space-y-2">
                     {day.exercises.length === 0 && (
-                      <p className="text-slate-500 text-xs text-center py-2">Sin ejercicios todavía</p>
+                      <p className="text-slate-500 text-xs text-center py-2">{t('routineBuilder.noExercises')}</p>
                     )}
                     {day.exercises.map((ex, exIdx) => (
                       <div key={exIdx} className="flex items-center gap-2 py-2 border-b border-white/5 last:border-0">
@@ -235,7 +241,7 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
                       onClick={() => setShowExerciseSearch(dayIdx)}
                       className="w-full py-2 rounded-xl border border-dashed border-white/10 text-slate-500 hover:text-indigo-400 hover:border-indigo-500/30 text-xs transition-colors flex items-center justify-center gap-1"
                     >
-                      <Plus size={12} /> Añadir ejercicio
+                      <Plus size={12} /> {t('routineBuilder.addExercise')}
                     </button>
                   </div>
                 </motion.div>
@@ -248,7 +254,7 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
           onClick={addDay}
           className="w-full py-3 rounded-2xl border border-dashed border-white/10 text-slate-500 hover:text-indigo-400 hover:border-indigo-500/30 text-sm transition-colors flex items-center justify-center gap-2"
         >
-          <Plus size={16} /> Añadir día
+          <Plus size={16} /> {t('routineBuilder.addDay')}
         </button>
       </div>
 
@@ -258,22 +264,25 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
         className="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2"
       >
         <Save size={16} />
-        {saveMutation.isPending ? 'Guardando...' : 'Guardar rutina'}
+        {saveMutation.isPending ? t('routineBuilder.saving') : t('routineBuilder.save')}
       </button>
 
       {saveMutation.isError && (
-        <MutationError message="No se pudo guardar la rutina. Reintenta." />
+        <MutationError message={t('routineBuilder.saveError')} />
       )}
 
       {!canSave && name && (
         <p className="text-slate-500 text-xs text-center">
-          {totalExercises === 0 ? 'Añade al menos un ejercicio para guardar' : ''}
+          {totalExercises === 0 ? t('routineBuilder.needExercise') : ''}
         </p>
       )}
 
       <AnimatePresence>
         {showExerciseSearch !== null && (
-          <Modal title={`Añadir ejercicio — ${days[showExerciseSearch]?.dayName}`} onClose={() => setShowExerciseSearch(null)}>
+          <Modal
+            title={t('routineBuilder.modalTitle', { day: days[showExerciseSearch]?.dayName })}
+            onClose={() => setShowExerciseSearch(null)}
+          >
             <ExerciseSearch
               onSelect={(exercise) => addExercise(showExerciseSearch, exercise)}
             />

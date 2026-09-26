@@ -1,35 +1,38 @@
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
-const TITLES: Record<string, string> = {
-  '/': 'Dashboard',
-  '/nutricion': 'Nutrición',
-  '/entreno': 'Entrenamiento',
-  '/calendario': 'Calendario',
-  '/perfil': 'Perfil',
-};
-
 function usePageTitle() {
   const { pathname } = useLocation();
+  const { t, i18n } = useTranslation();
+
   useEffect(() => {
-    const base = TITLES[pathname] || 'FitTrack';
+    const map: Record<string, string> = {
+      '/': t('titles.dashboard'),
+      '/nutricion': t('titles.nutrition'),
+      '/entreno': t('titles.workout'),
+      '/calendario': t('titles.calendar'),
+      '/perfil': t('titles.profile'),
+    };
+    const base = map[pathname] || 'FitTrack';
     document.title = `${base} · FitTrack`;
-  }, [pathname]);
+  }, [pathname, t, i18n.language]);
 }
 
 export function Layout({ children }: LayoutProps) {
   usePageTitle();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-[#0f0f1a] md:flex">
       <a href="#contenido-principal" className="skip-link">
-        Saltar al contenido
+        {t('nav.skipToContent')}
       </a>
       <Sidebar />
       <main

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +13,7 @@ import { format, addDays, parseISO } from 'date-fns';
 const MEALS = ['desayuno', 'almuerzo', 'cena', 'snack'];
 
 export function NutritionPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [searchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState(() =>
@@ -89,21 +91,21 @@ export function NutritionPage() {
   const dayFailed = isError && !data;
   const dayLoading = isLoading && !data;
   const mutationError =
-    (addMealMutation.isError && 'No se pudo añadir el alimento. Reintenta.') ||
-    (deleteMealMutation.isError && 'No se pudo eliminar el alimento. Reintenta.') ||
+    (addMealMutation.isError && t('nutrition.addMealError')) ||
+    (deleteMealMutation.isError && t('nutrition.deleteMealError')) ||
     null;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Nutrición</h1>
+        <h1 className="text-2xl font-bold text-white">{t('nutrition.title')}</h1>
       </div>
 
       <div className="flex items-center gap-3 glass border border-indigo-500/10 rounded-2xl px-4 py-3">
         <button
           onClick={() => goToDay(-1)}
-          aria-label="Día anterior"
+          aria-label={t('nutrition.previousDay')}
           className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
         >
           <ChevronLeft size={18} />
@@ -115,7 +117,7 @@ export function NutritionPage() {
         <button
           onClick={() => goToDay(1)}
           disabled={selectedDate >= todayString()}
-          aria-label="Día siguiente"
+          aria-label={t('nutrition.nextDay')}
           className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white disabled:opacity-30"
         >
           <ChevronRight size={18} />
@@ -127,7 +129,7 @@ export function NutritionPage() {
       {dayFailed ? (
         <div className="glass border border-red-500/20 rounded-2xl">
           <QueryError
-            message="No se pudo cargar la nutrición de este día."
+            message={t('nutrition.loadError')}
             onRetry={() => void refetch()}
           />
         </div>
@@ -152,14 +154,14 @@ export function NutritionPage() {
 
             <div className="grid grid-cols-3 gap-2 mt-4">
               {[
-                { label: 'Proteínas', value: dayLoading ? '…' : `${Math.round(totals.proteins)}g`, goal: `${Math.round(proteinGoal)}g`, color: 'text-indigo-400' },
-                { label: 'Carboh.', value: dayLoading ? '…' : `${Math.round(totals.carbs)}g`, goal: `${Math.round(carbsGoal)}g`, color: 'text-cyan-400' },
-                { label: 'Grasas', value: dayLoading ? '…' : `${Math.round(totals.fats)}g`, goal: `${Math.round(fatsGoal)}g`, color: 'text-amber-400' },
+                { label: t('macros.proteins'), value: dayLoading ? '…' : `${Math.round(totals.proteins)}g`, goal: `${Math.round(proteinGoal)}g`, color: 'text-indigo-400' },
+                { label: t('macros.carbsShort'), value: dayLoading ? '…' : `${Math.round(totals.carbs)}g`, goal: `${Math.round(carbsGoal)}g`, color: 'text-cyan-400' },
+                { label: t('macros.fats'), value: dayLoading ? '…' : `${Math.round(totals.fats)}g`, goal: `${Math.round(fatsGoal)}g`, color: 'text-amber-400' },
               ].map((m) => (
                 <div key={m.label} className="bg-white/3 rounded-xl p-3 text-center">
                   <p className={`text-lg font-bold ${m.color}`}>{m.value}</p>
                   <p className="text-slate-500 text-[10px]">{m.label}</p>
-                  <p className="text-slate-600 text-[10px]">/ {m.goal}</p>
+                  <p className="text-slate-600 text-[10px]">{t('nutrition.goalSep', { goal: m.goal })}</p>
                 </div>
               ))}
             </div>
@@ -189,12 +191,12 @@ export function NutritionPage() {
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-white font-medium text-sm">{getMealLabel(mealType)}</p>
-                        <p className="text-slate-500 text-xs">{mealItems.length} alimentos · {Math.round(mealCals)} kcal</p>
+                        <p className="text-slate-500 text-xs">{t('nutrition.mealSummary', { count: mealItems.length, calories: Math.round(mealCals) })}</p>
                       </div>
                     </button>
                     <button
                       type="button"
-                      aria-label={`Añadir alimento a ${getMealLabel(mealType)}`}
+                      aria-label={t('nutrition.addFoodAria', { meal: getMealLabel(mealType) })}
                       onClick={() => setAddingToMeal(mealType)}
                       disabled={addMealMutation.isPending}
                       className="p-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 transition-colors disabled:opacity-40"
@@ -216,13 +218,13 @@ export function NutritionPage() {
                             <div className="flex justify-center py-4"><Spinner size={20} /></div>
                           ) : mealItems.length === 0 ? (
                             <div className="py-3 text-center">
-                              <p className="text-slate-500 text-sm">Sin alimentos registrados</p>
+                              <p className="text-slate-500 text-sm">{t('nutrition.emptyMeal')}</p>
                               <button
                                 type="button"
                                 onClick={() => setAddingToMeal(mealType)}
                                 className="mt-2 text-indigo-400 text-xs hover:text-indigo-300"
                               >
-                                + Añadir alimento
+                                {t('nutrition.addFood')}
                               </button>
                             </div>
                           ) : (
@@ -251,7 +253,7 @@ export function NutritionPage() {
                                   </div>
                                   <button
                                     type="button"
-                                    aria-label={`Eliminar ${item.foodName}`}
+                                    aria-label={t('nutrition.deleteFoodAria', { name: item.foodName })}
                                     onClick={() => deleteMealMutation.mutate(item.id)}
                                     disabled={deleteMealMutation.isPending}
                                     className="text-slate-600 hover:text-red-400 transition-colors p-1.5 -mr-0.5 disabled:opacity-40"
@@ -275,7 +277,7 @@ export function NutritionPage() {
 
       <AnimatePresence>
         {addingToMeal && (
-          <Modal title={`Añadir a ${getMealLabel(addingToMeal)}`} onClose={() => setAddingToMeal(null)}>
+          <Modal title={t('nutrition.addToMeal', { meal: getMealLabel(addingToMeal) })} onClose={() => setAddingToMeal(null)}>
             <FoodSearch
               mealType={addingToMeal}
               onClose={() => setAddingToMeal(null)}

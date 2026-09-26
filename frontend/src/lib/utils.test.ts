@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeAll } from 'vitest';
+import i18n from '../i18n';
 import {
   calcMacrosFromPer100g,
   pct,
@@ -10,6 +11,10 @@ import {
   formatDate,
   weightAnomalyWarning,
 } from './utils';
+
+beforeAll(async () => {
+  await i18n.changeLanguage('es');
+});
 
 describe('calcMacrosFromPer100g', () => {
   const chicken = {

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 
 interface MacroRingProps {
@@ -25,6 +26,7 @@ export function MacroRing({
   fatsGoal = 65,
   size = 160,
 }: MacroRingProps) {
+  const { t } = useTranslation();
   const pct = Math.min((calories / Math.max(goal, 1)) * 100, 110);
   const r = (size / 2) - 16;
   const circumference = 2 * Math.PI * r;
@@ -71,9 +73,9 @@ export function MacroRing({
       </div>
 
       <div className="w-full space-y-2">
-        <MacroBar label="Proteínas" value={Math.round(proteins)} pct={pPct} color="#6366f1" unit="g" />
-        <MacroBar label="Carbos." value={Math.round(carbs)} pct={cPct} color="#06b6d4" unit="g" />
-        <MacroBar label="Grasas" value={Math.round(fats)} pct={fPct} color="#f59e0b" unit="g" />
+        <MacroBar label={t('macros.proteins')} value={Math.round(proteins)} pct={pPct} color="#6366f1" unit="g" />
+        <MacroBar label={t('macros.carbs')} value={Math.round(carbs)} pct={cPct} color="#06b6d4" unit="g" />
+        <MacroBar label={t('macros.fats')} value={Math.round(fats)} pct={fPct} color="#f59e0b" unit="g" />
       </div>
     </div>
   );
@@ -141,10 +143,11 @@ export function StatsCard({ title, value, subtitle, icon, color = 'indigo', clas
 }
 
 export function Spinner({ size = 24 }: { size?: number }) {
+  const { t } = useTranslation();
   return (
     <div
       role="status"
-      aria-label="Cargando"
+      aria-label={t('common.loading')}
       style={{ width: size, height: size }}
       className="border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"
     />
@@ -162,7 +165,7 @@ export function EmptyState({ icon, title, description }: { icon: string; title: 
 }
 
 export function QueryError({
-  message = 'No se pudo cargar los datos.',
+  message,
   onRetry,
   className,
 }: {
@@ -170,16 +173,17 @@ export function QueryError({
   onRetry?: () => void;
   className?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className={cn('flex flex-col items-center justify-center gap-3 px-4 py-10 text-center', className)} role="alert">
-      <p className="text-sm text-red-400">{message}</p>
+      <p className="text-sm text-red-400">{message || t('common.loadFailed')}</p>
       {onRetry && (
         <button
           type="button"
           onClick={onRetry}
           className="h-9 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-slate-200 transition-colors hover:bg-white/10 hover:text-white"
         >
-          Reintentar
+          {t('common.retry')}
         </button>
       )}
     </div>
@@ -202,6 +206,7 @@ export function Modal({ children, onClose, title }: {
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
@@ -271,7 +276,7 @@ export function Modal({ children, onClose, title }: {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Cerrar"
+            aria-label={t('common.close')}
             className="text-slate-400 hover:text-white transition-colors text-xl leading-none px-2"
           >
             &times;

@@ -1,17 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CalendarDays, Flame, Dumbbell, TrendingUp, ArrowRight, Target } from 'lucide-react';
 import { nutritionApi, workoutApi, userApi } from '../lib/api';
-import { todayString, formatDateLabel, getWeekStart, greetingForHour, remaining } from '../lib/utils';
+import { todayString, formatDateLabel, getWeekStart, greetingForHour, remaining, getDateFnsLocale } from '../lib/utils';
 import { MacroRing, StatsCard, Spinner, QueryError } from '../components/common/UI';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 export function DashboardPage() {
+  const { t } = useTranslation();
   const today = todayString();
   const weekStart = getWeekStart();
+  const dateFnsLocale = getDateFnsLocale();
 
   const profileQuery = useQuery({
     queryKey: ['user-profile'],
@@ -48,9 +50,10 @@ export function DashboardPage() {
   const calorieGoal = Math.max(800, profile?.calorieGoal || 2000);
   const totals = todayNutrition?.totals || { calories: 0, proteins: 0, carbs: 0, fats: 0 };
   const kcalLeft = remaining(totals.calories, calorieGoal);
+  const proteinGoalVal = Math.max(20, profile?.proteinGoal || 150);
 
   const chartData = (weeklyNutrition || []).map((d: { date: string; calories: number }) => ({
-    date: format(parseISO(d.date), 'EEE', { locale: es }),
+    date: format(parseISO(d.date), 'EEE', { locale: dateFnsLocale }),
     kcal: Math.round(d.calories),
     objetivo: calorieGoal,
   }));
@@ -73,7 +76,7 @@ export function DashboardPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">
-            {greetingForHour()}, {profile?.name || 'Atleta'}
+            {greetingForHour()}, {profile?.name || t('common.athlete')}
           </h1>
           <p className="text-slate-400 text-sm mt-0.5 capitalize">
             {formatDateLabel(today)}
@@ -84,14 +87,14 @@ export function DashboardPage() {
           className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-3 py-2 transition-colors"
         >
           <CalendarDays size={16} className="text-indigo-400" />
-          <span className="text-slate-300 text-sm hidden md:block">Calendario</span>
+          <span className="text-slate-300 text-sm hidden md:block">{t('dashboard.calendar')}</span>
         </Link>
       </div>
 
       {nutritionFailed ? (
         <div className="glass border border-red-500/20 rounded-2xl">
           <QueryError
-            message="No se pudo cargar la nutrición de hoy."
+            message={t('dashboard.nutritionLoadError')}
             onRetry={retryNutrition}
           />
         </div>
@@ -103,9 +106,9 @@ export function DashboardPage() {
             className="glass border border-indigo-500/10 rounded-2xl p-6"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-white font-semibold text-sm">Nutrición de Hoy</h2>
+              <h2 className="text-white font-semibold text-sm">{t('dashboard.nutritionToday')}</h2>
               <Link to="/nutricion" className="text-indigo-400 text-xs hover:text-indigo-300 flex items-center gap-1">
-                Ver <ArrowRight size={12} />
+                {t('dashboard.see')} <ArrowRight size={12} />
               </Link>
             </div>
             {nutritionLoading ? (
@@ -117,7 +120,7 @@ export function DashboardPage() {
                 proteins={totals.proteins}
                 carbs={totals.carbs}
                 fats={totals.fats}
-                proteinGoal={Math.max(20, profile?.proteinGoal || 150)}
+                proteinGoal={proteinGoalVal}
                 carbsGoal={Math.max(20, profile?.carbsGoal || 250)}
                 fatsGoal={Math.max(10, profile?.fatsGoal || 65)}
               />
@@ -126,28 +129,28 @@ export function DashboardPage() {
 
           <div className="lg:col-span-2 grid grid-cols-2 gap-3">
             <StatsCard
-              title="Calorías hoy"
+              title={t('dashboard.caloriesToday')}
               value={nutritionLoading ? '…' : `${Math.round(totals.calories)} kcal`}
-              subtitle={`Objetivo: ${calorieGoal} kcal`}
+              subtitle={t('dashboard.goalSubtitle', { goal: calorieGoal })}
               icon="🔥"
               color="indigo"
             />
             <StatsCard
-              title="Restantes"
+              title={t('dashboard.remaining')}
               value={nutritionLoading ? '…' : `${Math.round(kcalLeft)} kcal`}
-              subtitle="Por consumir"
+              subtitle={t('dashboard.remainingSubtitle')}
               icon="🎯"
               color={kcalLeft < 200 ? 'green' : 'cyan'}
             />
             <StatsCard
-              title="Proteínas"
+              title={t('macros.proteins')}
               value={nutritionLoading ? '…' : `${Math.round(totals.proteins)}g`}
-              subtitle={`Obj: ${Math.max(20, profile?.proteinGoal || 150)}g`}
+              subtitle={t('dashboard.proteinGoal', { goal: proteinGoalVal })}
               icon="💪"
               color="purple"
             />
             <StatsCard
-              title="Entrenamientos"
+              title={t('dashboard.workouts')}
               value={
                 workoutsQuery.isError && !todayWorkouts
                   ? '—'
@@ -155,7 +158,7 @@ export function DashboardPage() {
                     ? '…'
                     : (todayWorkouts?.length || 0)
               }
-              subtitle={workoutsQuery.isError && !todayWorkouts ? 'Error al cargar' : 'Hoy'}
+              subtitle={workoutsQuery.isError && !todayWorkouts ? t('dashboard.loadError') : t('common.today')}
               icon="🏋️"
               color="orange"
             />
@@ -170,17 +173,17 @@ export function DashboardPage() {
         className="glass border border-indigo-500/10 rounded-2xl p-6"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-white font-semibold">Calorías esta semana</h2>
+          <h2 className="text-white font-semibold">{t('dashboard.weekCalories')}</h2>
           <div className="flex items-center gap-3 text-xs">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />Real</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-600 inline-block" />Objetivo</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />{t('dashboard.chartActual')}</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-600 inline-block" />{t('dashboard.chartGoal')}</span>
           </div>
         </div>
         {weeklyQuery.isLoading && !weeklyNutrition ? (
           <div className="flex justify-center py-12"><Spinner size={28} /></div>
         ) : weeklyQuery.isError && !weeklyNutrition ? (
           <QueryError
-            message="No se pudo cargar la gráfica semanal."
+            message={t('dashboard.weekChartError')}
             onRetry={() => void weeklyQuery.refetch()}
             className="py-8"
           />
@@ -217,8 +220,8 @@ export function DashboardPage() {
                 <Flame size={20} className="text-indigo-400" />
               </div>
               <div>
-                <p className="text-white text-sm font-semibold">Registrar comida</p>
-                <p className="text-slate-500 text-xs">Añadir alimentos</p>
+                <p className="text-white text-sm font-semibold">{t('dashboard.logMeal')}</p>
+                <p className="text-slate-500 text-xs">{t('dashboard.logMealHint')}</p>
               </div>
               <ArrowRight size={16} className="text-slate-500 ml-auto" />
             </div>
@@ -234,8 +237,8 @@ export function DashboardPage() {
                 <Dumbbell size={20} className="text-purple-400" />
               </div>
               <div>
-                <p className="text-white text-sm font-semibold">Nuevo entreno</p>
-                <p className="text-slate-500 text-xs">Registrar ejercicios</p>
+                <p className="text-white text-sm font-semibold">{t('dashboard.newWorkout')}</p>
+                <p className="text-slate-500 text-xs">{t('dashboard.newWorkoutHint')}</p>
               </div>
               <ArrowRight size={16} className="text-slate-500 ml-auto" />
             </div>
@@ -245,7 +248,7 @@ export function DashboardPage() {
 
       {tdeeQuery.isError && !tdee ? (
         <div className="glass border border-white/5 rounded-2xl px-4 py-3">
-          <p className="text-slate-500 text-xs">TDEE no disponible ahora.</p>
+          <p className="text-slate-500 text-xs">{t('dashboard.tdeeUnavailable')}</p>
         </div>
       ) : tdee && tdee.tdee > 0 ? (
         <motion.div
@@ -259,11 +262,11 @@ export function DashboardPage() {
               <Target size={20} className="text-green-400" />
             </div>
             <div className="flex-1">
-              <p className="text-white text-sm font-medium">Tu metabolismo estimado (TDEE)</p>
+              <p className="text-white text-sm font-medium">{t('dashboard.tdeeTitle')}</p>
               <div className="flex gap-4 mt-1">
-                <span className="text-xs text-slate-400">BMR: <strong className="text-white">{tdee.bmr} kcal</strong></span>
-                <span className="text-xs text-slate-400">TDEE: <strong className="text-white">{tdee.tdee} kcal</strong></span>
-                <span className="text-xs text-slate-400">Objetivo: <strong className="text-green-400">{tdee.goal} kcal</strong></span>
+                <span className="text-xs text-slate-400">{t('profile.bmr')}: <strong className="text-white">{tdee.bmr} kcal</strong></span>
+                <span className="text-xs text-slate-400">{t('profile.tdee')}: <strong className="text-white">{tdee.tdee} kcal</strong></span>
+                <span className="text-xs text-slate-400">{t('profile.yourGoal')}: <strong className="text-green-400">{tdee.goal} kcal</strong></span>
               </div>
             </div>
             <Link to="/perfil" className="text-indigo-400 text-xs hover:text-indigo-300">
@@ -274,10 +277,10 @@ export function DashboardPage() {
       ) : tdee && !tdeeQuery.isLoading ? (
         <div className="glass border border-white/5 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
           <p className="text-slate-500 text-xs">
-            Completa peso, altura, fecha de nacimiento y sexo en perfil para ver TDEE.
+            {t('dashboard.tdeeIncomplete')}
           </p>
           <Link to="/perfil" className="text-indigo-400 text-xs hover:text-indigo-300 shrink-0">
-            Perfil
+            {t('dashboard.profileLink')}
           </Link>
         </div>
       ) : null}

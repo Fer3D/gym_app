@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import Calendar from 'react-calendar';
 import { Link } from 'react-router-dom';
 import { format, isSameDay, isToday as isDateToday } from 'date-fns';
-import { es } from 'date-fns/locale';
 import {
   ChevronLeft,
   ChevronRight,
@@ -14,7 +14,7 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import { calendarApi } from '../lib/api';
-import { cn, dateToString, formatDateLabel, pct } from '../lib/utils';
+import { cn, dateToString, formatDateLabel, pct, getDateFnsLocale } from '../lib/utils';
 import type { CalendarDaySummary } from '../types';
 
 type ValuePiece = Date | null;
@@ -46,6 +46,9 @@ function DayDots({ day }: { day?: CalendarDaySummary }) {
 }
 
 export function CalendarPage() {
+  const { t, i18n } = useTranslation();
+  const dateFnsLocale = getDateFnsLocale();
+  const calendarLocale = i18n.language?.toLowerCase().startsWith('en') ? 'en-US' : 'es-ES';
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewDate, setViewDate] = useState(new Date());
 
@@ -63,8 +66,8 @@ export function CalendarPage() {
   const calorieGoal = summary?.calorieGoal || 2000;
 
   const monthLabel = useMemo(
-    () => format(viewDate, 'MMMM yyyy', { locale: es }),
-    [viewDate]
+    () => format(viewDate, 'MMMM yyyy', { locale: dateFnsLocale }),
+    [viewDate, dateFnsLocale]
   );
 
   const monthStats = useMemo(() => {
@@ -124,7 +127,7 @@ export function CalendarPage() {
       <header className="flex items-end justify-between gap-3">
         <div>
           <h1 className="text-[1.375rem] font-semibold tracking-tight text-[#eef0f3] sm:text-2xl">
-            Calendario
+            {t('calendar.title')}
           </h1>
           <p className="mt-0.5 text-sm capitalize text-[#9aa3b2]">{monthLabel}</p>
         </div>
@@ -133,18 +136,18 @@ export function CalendarPage() {
           onClick={goToday}
           className="h-9 shrink-0 rounded-md border border-[#2a2f3a] bg-[#14171c] px-3 text-sm text-[#c8ced8] transition-colors hover:bg-[#1b1f27] hover:text-[#eef0f3]"
         >
-          Hoy
+          {t('calendar.today')}
         </button>
       </header>
 
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-[#2a2f3a] bg-[#2a2f3a] sm:grid-cols-4">
         {[
-          { label: 'Días con comida', value: monthStats.nutritionDays },
-          { label: 'Objetivo cumplido', value: monthStats.goalDays },
-          { label: 'Días de entreno', value: monthStats.workoutDays },
+          { label: t('calendar.daysWithFood'), value: monthStats.nutritionDays },
+          { label: t('calendar.goalMet'), value: monthStats.goalDays },
+          { label: t('calendar.workoutDays'), value: monthStats.workoutDays },
           {
-            label: 'Media kcal',
-            value: monthStats.avgKcal > 0 ? monthStats.avgKcal.toLocaleString('es-ES') : '—',
+            label: t('calendar.avgKcal'),
+            value: monthStats.avgKcal > 0 ? monthStats.avgKcal.toLocaleString(calendarLocale) : '—',
           },
         ].map((s) => (
           <div key={s.label} className="bg-[#14171c] px-3 py-3 sm:px-4">
@@ -164,7 +167,7 @@ export function CalendarPage() {
               {formatDateLabel(selectedStr)}
             </h2>
             <span className="font-mono text-xs tabular-nums text-[#6b7385]">
-              {format(selectedDate, "d 'de' MMMM", { locale: es })}
+              {format(selectedDate, "d 'de' MMMM", { locale: dateFnsLocale })}
             </span>
           </div>
 
@@ -179,37 +182,37 @@ export function CalendarPage() {
             >
               {isLoading && !summary ? (
                 <div className="flex h-full min-h-[280px] items-center justify-center text-sm text-[#9aa3b2]">
-                  Cargando mes…
+                  {t('calendar.loadingMonth')}
                 </div>
               ) : isError ? (
                 <div className="flex h-full min-h-[280px] flex-col items-center justify-center px-5 py-10 text-center">
-                  <p className="text-sm text-[#e25c5c]">No se pudo cargar el calendario.</p>
+                  <p className="text-sm text-[#e25c5c]">{t('calendar.loadError')}</p>
                   <button
                     type="button"
                     onClick={() => void refetch()}
                     className="mt-4 h-10 rounded-md border border-[#2a2f3a] bg-[#1b1f27] px-4 text-sm text-[#eef0f3]"
                   >
-                    Reintentar
+                    {t('common.retry')}
                   </button>
                 </div>
               ) : !hasAnyActivity ? (
                 <div className="flex h-full min-h-[280px] flex-col items-center justify-center px-5 py-10 text-center">
-                  <p className="text-sm text-[#9aa3b2]">Sin actividad este día.</p>
+                  <p className="text-sm text-[#9aa3b2]">{t('calendar.noActivity')}</p>
                   <p className="mt-1 max-w-[240px] text-xs text-[#6b7385]">
-                    Registra comida o inicia un entrenamiento para ver el resumen aquí.
+                    {t('calendar.noActivityHint')}
                   </p>
                   <div className="mt-5 flex flex-wrap justify-center gap-2">
                     <Link
                       to={`/nutricion?date=${selectedStr}`}
                       className="inline-flex h-10 items-center rounded-md bg-[#3ecf8e] px-4 text-sm font-semibold text-[#062016]"
                     >
-                      Añadir comida
+                      {t('calendar.addFood')}
                     </Link>
                     <Link
                       to={`/entreno?date=${selectedStr}`}
                       className="inline-flex h-10 items-center rounded-md border border-[#2a2f3a] bg-[#1b1f27] px-4 text-sm text-[#eef0f3]"
                     >
-                      Entreno
+                      {t('calendar.workout')}
                     </Link>
                   </div>
                 </div>
@@ -221,19 +224,19 @@ export function CalendarPage() {
                         <div className="flex items-center gap-2 text-[#9aa3b2]">
                           <Utensils size={14} strokeWidth={1.75} />
                           <span className="text-xs font-medium uppercase tracking-wide">
-                            Nutrición
+                            {t('calendar.nutrition')}
                           </span>
                         </div>
                         {dayData.nutrition.goalMet ? (
                           <span className="text-[11px] font-medium text-[#3ecf8e]">
-                            Objetivo
+                            {t('calendar.goalBadge')}
                           </span>
                         ) : (
                           <Link
                             to={`/nutricion?date=${selectedStr}`}
                             className="inline-flex items-center gap-0.5 text-xs text-[#9aa3b2] hover:text-[#eef0f3]"
                           >
-                            Abrir <ArrowUpRight size={12} />
+                            {t('common.open')} <ArrowUpRight size={12} />
                           </Link>
                         )}
                       </div>
@@ -241,10 +244,10 @@ export function CalendarPage() {
                       <div>
                         <div className="flex items-baseline gap-2">
                           <span className="font-mono text-3xl font-semibold tabular-nums tracking-tight text-[#eef0f3]">
-                            {Math.round(dayData.nutrition.calories).toLocaleString('es-ES')}
+                            {Math.round(dayData.nutrition.calories).toLocaleString(calendarLocale)}
                           </span>
                           <span className="text-sm text-[#6b7385]">
-                            / {calorieGoal.toLocaleString('es-ES')} kcal
+                            / {calorieGoal.toLocaleString(calendarLocale)} kcal
                           </span>
                         </div>
                         <div className="mt-3 h-1 overflow-hidden rounded-sm bg-[#232833]">
@@ -262,9 +265,9 @@ export function CalendarPage() {
 
                       <div className="grid grid-cols-3 gap-3 border-t border-[#1f2430] pt-3">
                         {[
-                          { label: 'Prot.', value: dayData.nutrition.proteins || 0 },
-                          { label: 'Carb.', value: dayData.nutrition.carbs || 0 },
-                          { label: 'Grasa', value: dayData.nutrition.fats || 0 },
+                          { label: t('macros.proteins'), value: dayData.nutrition.proteins || 0 },
+                          { label: t('macros.carbsShort'), value: dayData.nutrition.carbs || 0 },
+                          { label: t('macros.fats'), value: dayData.nutrition.fats || 0 },
                         ].map((m) => (
                           <div key={m.label}>
                             <p className="text-[11px] text-[#6b7385]">{m.label}</p>
@@ -281,9 +284,9 @@ export function CalendarPage() {
                   {dayData?.nutrition?.weight != null && (
                     <div className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
                       <Scale size={14} className="text-[#6b7385]" strokeWidth={1.75} />
-                      <span className="flex-1 text-xs text-[#9aa3b2]">Peso</span>
+                      <span className="flex-1 text-xs text-[#9aa3b2]">{t('calendar.weight')}</span>
                       <span className="font-mono text-sm tabular-nums text-[#eef0f3]">
-                        {dayData.nutrition.weight} kg
+                        {t('calendar.weightValue', { weight: dayData.nutrition.weight })}
                       </span>
                     </div>
                   )}
@@ -294,14 +297,14 @@ export function CalendarPage() {
                         <div className="flex items-center gap-2 text-[#9aa3b2]">
                           <Dumbbell size={14} strokeWidth={1.75} />
                           <span className="text-xs font-medium uppercase tracking-wide">
-                            Entrenamiento
+                            {t('calendar.training')}
                           </span>
                         </div>
                         <Link
                           to={`/entreno?date=${selectedStr}`}
                           className="inline-flex items-center gap-0.5 text-xs text-[#9aa3b2] hover:text-[#eef0f3]"
                         >
-                          Abrir <ArrowUpRight size={12} />
+                          {t('common.open')} <ArrowUpRight size={12} />
                         </Link>
                       </div>
 
@@ -317,14 +320,14 @@ export function CalendarPage() {
                               </p>
                               <p className="text-xs text-[#6b7385]">
                                 {w.exercises > 0
-                                  ? `${w.exercises} ejercicios · ${w.totalSets} series`
-                                  : 'Sesión iniciada'}
+                                  ? t('calendar.workoutStats', { exercises: w.exercises, sets: w.totalSets })
+                                  : t('calendar.sessionStarted')}
                               </p>
                             </div>
                             {w.totalVolume > 0 && (
                               <div className="text-right">
                                 <p className="font-mono text-sm tabular-nums text-[#eef0f3]">
-                                  {Math.round(w.totalVolume).toLocaleString('es-ES')}
+                                  {Math.round(w.totalVolume).toLocaleString(calendarLocale)}
                                 </p>
                                 <p className="text-[10px] uppercase tracking-wide text-[#6b7385]">
                                   kg
@@ -349,7 +352,7 @@ export function CalendarPage() {
                 type="button"
                 onClick={() => shiftMonth(-1)}
                 className="inline-flex size-9 items-center justify-center rounded-md text-[#9aa3b2] hover:bg-[#1b1f27] hover:text-[#eef0f3]"
-                aria-label="Mes anterior"
+                aria-label={t('calendar.prevMonth')}
               >
                 <ChevronLeft size={18} />
               </button>
@@ -358,7 +361,7 @@ export function CalendarPage() {
                 type="button"
                 onClick={() => shiftMonth(1)}
                 className="inline-flex size-9 items-center justify-center rounded-md text-[#9aa3b2] hover:bg-[#1b1f27] hover:text-[#eef0f3]"
-                aria-label="Mes siguiente"
+                aria-label={t('calendar.nextMonth')}
               >
                 <ChevronRight size={18} />
               </button>
@@ -366,13 +369,13 @@ export function CalendarPage() {
 
             <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 px-1 text-[11px] text-[#6b7385]">
               <span className="inline-flex items-center gap-1.5">
-                <span className="ft-cal__dot ft-cal__dot--food" /> Nutrición
+                <span className="ft-cal__dot ft-cal__dot--food" /> {t('calendar.legendNutrition')}
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="ft-cal__dot ft-cal__dot--goal" /> Objetivo
+                <span className="ft-cal__dot ft-cal__dot--goal" /> {t('calendar.legendGoal')}
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="ft-cal__dot ft-cal__dot--workout" /> Entreno
+                <span className="ft-cal__dot ft-cal__dot--workout" /> {t('calendar.legendWorkout')}
               </span>
             </div>
 
@@ -402,7 +405,7 @@ export function CalendarPage() {
                 ) : null
               }
               tileClassName={tileClassName}
-              locale="es-ES"
+              locale={calendarLocale}
               maxDate={new Date()}
               showNeighboringMonth
               next2Label={null}
@@ -411,7 +414,7 @@ export function CalendarPage() {
               prevLabel={null}
               navigationLabel={() => null}
               formatShortWeekday={(_locale, date) =>
-                format(date, 'EEEEEE', { locale: es }).toUpperCase()
+                format(date, 'EEEEEE', { locale: dateFnsLocale }).toUpperCase()
               }
             />
           </div>

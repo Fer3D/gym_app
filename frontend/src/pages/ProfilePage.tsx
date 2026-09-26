@@ -1,24 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Save, User, Target, Scale, Ruler, Calendar, Activity } from 'lucide-react';
+import { Save, User, Target, Scale, Ruler, Calendar, Activity, Languages } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { userApi } from '../lib/api';
 import { Spinner, QueryError, MutationError } from '../components/common/UI';
-
-const OBJECTIVES = [
-  { value: 'perder_peso', label: 'Perder peso', icon: '📉', desc: 'Déficit calórico de ~500 kcal' },
-  { value: 'mantener', label: 'Mantener peso', icon: '⚖️', desc: 'Mantener calorías de mantenimiento' },
-  { value: 'ganar_musculo', label: 'Ganar músculo', icon: '💪', desc: 'Superávit calórico de ~300 kcal' },
-];
-
-const GENDERS = [
-  { value: 'masculino', label: 'Masculino', icon: '♂️' },
-  { value: 'femenino', label: 'Femenino', icon: '♀️' },
-  { value: 'no_especificado', label: 'No especificar', icon: '⚪' },
-];
+import {
+  getLanguagePreference,
+  setLanguagePreference,
+  type LanguagePreference,
+} from '../i18n';
 
 export function ProfilePage() {
   const qc = useQueryClient();
+  const { t, i18n } = useTranslation();
+  const [langPref, setLangPref] = useState<LanguagePreference>(() => getLanguagePreference());
 
   const {
     data: profile,
@@ -120,6 +116,29 @@ export function ProfilePage() {
     }));
   };
 
+  const handleLanguage = (pref: LanguagePreference) => {
+    setLangPref(pref);
+    setLanguagePreference(pref);
+  };
+
+  const OBJECTIVES = [
+    { value: 'perder_peso', icon: '📉' },
+    { value: 'mantener', icon: '⚖️' },
+    { value: 'ganar_musculo', icon: '💪' },
+  ] as const;
+
+  const GENDERS = [
+    { value: 'masculino', icon: '♂️' },
+    { value: 'femenino', icon: '♀️' },
+    { value: 'no_especificado', icon: '⚪' },
+  ] as const;
+
+  const LANG_OPTIONS: { value: LanguagePreference; label: string; desc: string }[] = [
+    { value: 'system', label: t('language.system'), desc: t('language.systemDesc') },
+    { value: 'es', label: t('language.spanish'), desc: 'ES' },
+    { value: 'en', label: t('language.english'), desc: 'EN' },
+  ];
+
   if (isLoading && !profile) {
     return <div className="flex justify-center py-20"><Spinner size={36} /></div>;
   }
@@ -128,7 +147,7 @@ export function ProfilePage() {
     return (
       <div className="glass max-w-2xl rounded-2xl border border-red-500/20">
         <QueryError
-          message="No se pudo cargar el perfil."
+          message={t('profile.loadError')}
           onRetry={() => void refetch()}
         />
       </div>
@@ -138,7 +157,7 @@ export function ProfilePage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 max-w-2xl">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white">Perfil</h1>
+        <h1 className="text-2xl font-bold text-white">{t('profile.title')}</h1>
         <motion.button
           onClick={handleSave}
           disabled={updateMutation.isPending}
@@ -149,18 +168,56 @@ export function ProfilePage() {
           }`}
         >
           {updateMutation.isPending ? <Spinner size={16} /> : <Save size={16} />}
-          {saved ? '¡Guardado!' : 'Guardar'}
+          {saved ? t('common.saved') : t('common.save')}
         </motion.button>
       </div>
 
       {updateMutation.isError && (
-        <MutationError message="No se pudo guardar el perfil. Revisa los datos e inténtalo de nuevo." />
+        <MutationError message={t('profile.saveError')} />
       )}
+
+      <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <Languages size={16} className="text-indigo-400" aria-hidden />
+          <h2 className="text-white font-semibold text-sm">{t('language.sectionTitle')}</h2>
+        </div>
+        <p className="text-slate-400 text-xs">{t('language.sectionHint')}</p>
+        <div className="space-y-2" role="group" aria-label={t('language.sectionTitle')}>
+          {LANG_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              aria-pressed={langPref === opt.value}
+              onClick={() => handleLanguage(opt.value)}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
+                langPref === opt.value
+                  ? 'bg-indigo-600/20 border-indigo-500/40 text-white'
+                  : 'bg-white/3 border-white/5 text-slate-400 hover:bg-white/8'
+              }`}
+            >
+              <div>
+                <p className={`text-sm font-medium ${langPref === opt.value ? 'text-white' : 'text-slate-300'}`}>
+                  {opt.label}
+                </p>
+                <p className="text-xs text-slate-400">{opt.desc}</p>
+              </div>
+              {langPref === opt.value && (
+                <span className="ml-auto text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full">
+                  {t('language.active')}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] text-slate-500">
+          {i18n.language?.startsWith('en') ? 'EN' : 'ES'}
+        </p>
+      </div>
 
       <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <User size={16} className="text-indigo-400" />
-          <h2 className="text-white font-semibold text-sm">Información Personal</h2>
+          <h2 className="text-white font-semibold text-sm">{t('profile.personalInfo')}</h2>
         </div>
 
         <div className="flex items-center gap-4">
@@ -168,21 +225,21 @@ export function ProfilePage() {
             {(form.name || 'U')[0].toUpperCase()}
           </div>
           <div className="flex-1">
-            <label htmlFor="profile-name" className="text-slate-400 text-xs mb-1 block">Nombre</label>
+            <label htmlFor="profile-name" className="text-slate-400 text-xs mb-1 block">{t('profile.name')}</label>
             <input
               id="profile-name"
               type="text"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
-              placeholder="Tu nombre"
+              placeholder={t('profile.namePlaceholder')}
               autoComplete="name"
             />
           </div>
         </div>
 
         <div>
-          <p id="profile-gender-label" className="text-slate-400 text-xs mb-2 block">Sexo biológico (para calcular TDEE)</p>
+          <p id="profile-gender-label" className="text-slate-400 text-xs mb-2 block">{t('profile.genderLabel')}</p>
           <div className="flex gap-2" role="group" aria-labelledby="profile-gender-label">
             {GENDERS.map((g) => (
               <button
@@ -194,7 +251,7 @@ export function ProfilePage() {
                   form.gender === g.value ? 'bg-indigo-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'
                 }`}
               >
-                <span aria-hidden>{g.icon}</span> {g.label}
+                <span aria-hidden>{g.icon}</span> {t(`profile.gender.${g.value}`)}
               </button>
             ))}
           </div>
@@ -203,7 +260,7 @@ export function ProfilePage() {
         <div className="grid grid-cols-3 gap-3">
           <div>
             <label htmlFor="profile-weight" className="text-slate-400 text-xs mb-1 flex items-center gap-1">
-              <Scale size={12} aria-hidden /> Peso (kg)
+              <Scale size={12} aria-hidden /> {t('profile.weight')}
             </label>
             <input
               id="profile-weight"
@@ -218,7 +275,7 @@ export function ProfilePage() {
           </div>
           <div>
             <label htmlFor="profile-height" className="text-slate-400 text-xs mb-1 flex items-center gap-1">
-              <Ruler size={12} aria-hidden /> Altura (cm)
+              <Ruler size={12} aria-hidden /> {t('profile.height')}
             </label>
             <input
               id="profile-height"
@@ -232,7 +289,7 @@ export function ProfilePage() {
           </div>
           <div>
             <label htmlFor="profile-birthDate" className="text-slate-400 text-xs mb-1 flex items-center gap-1">
-              <Calendar size={12} aria-hidden /> Nacimiento
+              <Calendar size={12} aria-hidden /> {t('profile.birthDate')}
             </label>
             <input
               id="profile-birthDate"
@@ -248,7 +305,7 @@ export function ProfilePage() {
       <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-3">
         <div className="flex items-center gap-2 mb-2">
           <Target size={16} className="text-indigo-400" aria-hidden />
-          <h2 className="text-white font-semibold text-sm" id="profile-objective-heading">Objetivo</h2>
+          <h2 className="text-white font-semibold text-sm" id="profile-objective-heading">{t('profile.objective')}</h2>
         </div>
         <div className="space-y-2" role="group" aria-labelledby="profile-objective-heading">
           {OBJECTIVES.map((obj) => (
@@ -265,11 +322,15 @@ export function ProfilePage() {
             >
               <span className="text-xl" aria-hidden>{obj.icon}</span>
               <div>
-                <p className={`text-sm font-medium ${form.objective === obj.value ? 'text-white' : 'text-slate-300'}`}>{obj.label}</p>
-                <p className="text-xs text-slate-400">{obj.desc}</p>
+                <p className={`text-sm font-medium ${form.objective === obj.value ? 'text-white' : 'text-slate-300'}`}>
+                  {t(`profile.objectives.${obj.value}.label`)}
+                </p>
+                <p className="text-xs text-slate-400">{t(`profile.objectives.${obj.value}.desc`)}</p>
               </div>
               {form.objective === obj.value && (
-                <span className="ml-auto text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full">Activo</span>
+                <span className="ml-auto text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full">
+                  {t('profile.active')}
+                </span>
               )}
             </button>
           ))}
@@ -281,7 +342,7 @@ export function ProfilePage() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Activity size={16} className="text-green-400" aria-hidden />
-              <h2 className="text-white font-semibold text-sm">Tu metabolismo (Mifflin-St Jeor)</h2>
+              <h2 className="text-white font-semibold text-sm">{t('profile.metabolism')}</h2>
             </div>
             <button
               type="button"
@@ -289,44 +350,42 @@ export function ProfilePage() {
               disabled={!form.weight}
               className="text-indigo-400 text-xs hover:text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-lg transition-colors disabled:opacity-40"
             >
-              Autocompletar
+              {t('profile.autofill')}
             </button>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white/3 rounded-xl p-3 text-center">
               <p className="text-white font-bold text-xl">{tdee.bmr}</p>
-              <p className="text-slate-400 text-xs">BMR (reposo)</p>
+              <p className="text-slate-400 text-xs">{t('profile.bmr')}</p>
             </div>
             <div className="bg-white/3 rounded-xl p-3 text-center">
               <p className="text-white font-bold text-xl">{tdee.tdee}</p>
-              <p className="text-slate-400 text-xs">TDEE (activo)</p>
+              <p className="text-slate-400 text-xs">{t('profile.tdee')}</p>
             </div>
             <div className="bg-green-600/10 rounded-xl p-3 text-center border border-green-500/20">
               <p className="text-green-400 font-bold text-xl">{tdee.goal}</p>
-              <p className="text-slate-400 text-xs">Tu objetivo</p>
+              <p className="text-slate-400 text-xs">{t('profile.yourGoal')}</p>
             </div>
           </div>
         </div>
       ) : (
         <div className="glass border border-white/5 rounded-2xl px-4 py-3">
-          <p className="text-slate-400 text-xs">
-            TDEE necesita peso, altura, fecha de nacimiento y sexo (masculino/femenino).
-          </p>
+          <p className="text-slate-400 text-xs">{t('profile.tdeeNeeds')}</p>
         </div>
       )}
 
       <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Target size={16} className="text-indigo-400" aria-hidden />
-          <h2 className="text-white font-semibold text-sm">Objetivos Nutricionales</h2>
+          <h2 className="text-white font-semibold text-sm">{t('profile.nutritionGoals')}</h2>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           {[
-            { key: 'calorieGoal', label: 'Calorías diarias', placeholder: '2000', suffix: 'kcal', id: 'profile-calorieGoal' },
-            { key: 'proteinGoal', label: 'Proteínas', placeholder: '150', suffix: 'g', id: 'profile-proteinGoal' },
-            { key: 'carbsGoal', label: 'Carbohidratos', placeholder: '250', suffix: 'g', id: 'profile-carbsGoal' },
-            { key: 'fatsGoal', label: 'Grasas', placeholder: '65', suffix: 'g', id: 'profile-fatsGoal' },
+            { key: 'calorieGoal', label: t('profile.dailyCalories'), placeholder: '2000', suffix: 'kcal', id: 'profile-calorieGoal' },
+            { key: 'proteinGoal', label: t('profile.proteins'), placeholder: '150', suffix: 'g', id: 'profile-proteinGoal' },
+            { key: 'carbsGoal', label: t('profile.carbs'), placeholder: '250', suffix: 'g', id: 'profile-carbsGoal' },
+            { key: 'fatsGoal', label: t('profile.fats'), placeholder: '65', suffix: 'g', id: 'profile-fatsGoal' },
           ].map(({ key, label, placeholder, suffix, id }) => (
             <div key={key}>
               <label htmlFor={id} className="text-slate-400 text-xs mb-1 block">{label}</label>

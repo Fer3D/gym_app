@@ -8,15 +8,8 @@ import {
   User2,
   Zap,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
-
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/nutricion', label: 'Nutrición', icon: UtensilsCrossed },
-  { to: '/entreno', label: 'Entreno', icon: Dumbbell },
-  { to: '/calendario', label: 'Calendario', icon: CalendarDays },
-  { to: '/perfil', label: 'Perfil', icon: User2 },
-];
 
 function isItemActive(pathname: string, to: string) {
   return to === '/' ? pathname === '/' : pathname.startsWith(to);
@@ -24,6 +17,15 @@ function isItemActive(pathname: string, to: string) {
 
 export function Sidebar() {
   const location = useLocation();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { to: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { to: '/nutricion', label: t('nav.nutrition'), icon: UtensilsCrossed },
+    { to: '/entreno', label: t('nav.workout'), icon: Dumbbell },
+    { to: '/calendario', label: t('nav.calendar'), icon: CalendarDays },
+    { to: '/perfil', label: t('nav.profile'), icon: User2 },
+  ];
 
   return (
     <>
@@ -35,7 +37,7 @@ export function Sidebar() {
           <span className="text-sm font-bold leading-none text-white">FitTrack</span>
         </div>
 
-        <nav className="flex-1 space-y-1 px-2 py-4" aria-label="Principal">
+        <nav className="flex-1 space-y-1 px-2 py-4" aria-label={t('nav.aria')}>
           {navItems.map(({ to, label, icon: Icon }) => {
             const isActive = isItemActive(location.pathname, to);
             return (
@@ -65,7 +67,7 @@ export function Sidebar() {
 
       <nav
         className="fixed inset-x-0 bottom-0 z-50 border-t border-indigo-500/10 bg-[#0f0f1a]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
-        aria-label="Principal"
+        aria-label={t('nav.aria')}
       >
         <ul className="grid h-16 grid-cols-5">
           {navItems.map(({ to, label, icon: Icon }) => {
