@@ -10,10 +10,12 @@
 </p>
 
 <p align="center">
-  <a href="https://YOUR-VERCEL-APP.vercel.app"><img src="https://img.shields.io/badge/Live%20demo-Vercel-black?style=for-the-badge&logo=vercel" alt="Live demo"></a>
+  <a href="https://gym-app-opal-eight.vercel.app"><img src="https://img.shields.io/badge/Live%20demo-Vercel-black?style=for-the-badge&logo=vercel" alt="Live demo"></a>
 </p>
 
 > **Demo pública:** sin auth. Todos comparten el mismo usuario (`userId` 1). Ideal para probar; no metas datos personales.
+>
+> API: https://gym-app-otiw.onrender.com/api/health
 
 ---
 
@@ -109,14 +111,15 @@ Variables clave (ver `.env.example`):
 # backend
 DATABASE_URL=libsql://...
 TURSO_AUTH_TOKEN=...
-CORS_ORIGIN=https://tu-app.vercel.app
+CORS_ORIGIN=https://gym-app-opal-eight.vercel.app
 PORT=3001
 
 # frontend (Vercel)
-VITE_API_URL=https://tu-api.onrender.com/api
+# VITE_API_URL=https://gym-app-otiw.onrender.com/api
 ```
 
-Render: root `backend`, build `npm install && npm run build`, start `npm run start:prod`.
+Render: root `backend`, build `npm install && npm run build`, start `npm run start:prod`.  
+Live UI: https://gym-app-opal-eight.vercel.app — API: https://gym-app-otiw.onrender.com  
 Vercel: root `frontend`.
 
 ### Herramientas
