@@ -8,12 +8,12 @@
 
 ## FitTrack
 
-Demo de portfolio que monté para llevar las comidas y entrenos en un mismo sitio: macros, rutinas, calendario y perfil.  
+Demo de portfolio que monté para llevar las comidas y entrenos en un mismo sitio: macros, rutinas, calendario y perfil.
 Frontend en React, API en Express, datos en LibSQL (SQLite en local, Turso en la demo online). La interfaz sigue el idioma del navegador (ES o EN), o lo puedes modificar en el Perfil.
 
 [![Live demo](https://img.shields.io/badge/Live%20demo-Vercel-black?style=for-the-badge&logo=vercel)](https://gym-app-opal-eight.vercel.app)
 
-> **Ojo:** la demo pública no tiene login. Todo el mundo usa el mismo usuario compartido (`userId` 1), así que no metas ninguna información personal.  
+> **Ojo:** la demo pública no tiene login. Todo el mundo usa el mismo usuario compartido (`userId` 1), así que no metas ninguna información personal.
 > Ping de la API: [gym-app-otiw.onrender.com/api/health](https://gym-app-otiw.onrender.com/api/health)
 
 > **Sobre el nombre:** «FitTrack» es solo un placeholder de esta pieza de portfolio. No es un producto que venda ni una marca mía. Si coincide con otra marca, es casualidad — sin afiliación.

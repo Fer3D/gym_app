@@ -8,12 +8,12 @@
 
 ## FitTrack
 
-Portfolio demo I built to track meals and workouts in the same place: macros, routines, calendar, and profile.  
+Portfolio demo I built to track meals and workouts in the same place: macros, routines, calendar, and profile.
 Frontend in React, API in Express, data in LibSQL (SQLite locally, Turso for the live demo). The UI follows the browser language (Spanish or English), or you can change it in Profile.
 
 [![Live demo](https://img.shields.io/badge/Live%20demo-Vercel-black?style=for-the-badge&logo=vercel)](https://gym-app-opal-eight.vercel.app)
 
-> **Heads up:** the public demo has no login. Everyone uses the same shared user (`userId` 1), so please don’t put any personal information in there.  
+> **Heads up:** the public demo has no login. Everyone uses the same shared user (`userId` 1), so please don’t put any personal information in there.
 > API ping: [gym-app-otiw.onrender.com/api/health](https://gym-app-otiw.onrender.com/api/health)
 
 > **About the name:** “FitTrack” is just a placeholder for this portfolio piece. It’s not a product I’m selling, and I’m not claiming the trademark. If it overlaps with another brand, that’s coincidence — not affiliation.
