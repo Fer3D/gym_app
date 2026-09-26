@@ -4,50 +4,50 @@
   <a href="./README_es.md"><img src="https://flagcdn.com/h20/es.png" height="20" alt="Español"></a>
 </p>
 
-![FitTrack banner](https://capsule-render.vercel.app/api?type=waving&color=0:0f0f1a,100:4f46e5&height=220&section=header&text=FitTrack&fontSize=70&fontColor=ffffff&animation=fadeIn&fontAlignY=40&desc=Nutrition%20%C2%B7%20Workouts&descAlignY=58&descAlign=50)
+![FitTrack banner](https://capsule-render.vercel.app/api?type=waving&color=0:0f0f1a,100:4f46e5&height=220&section=header&text=FitTrack&fontSize=70&fontColor=ffffff&animation=fadeIn&fontAlignY=40&desc=Nutrici%C3%B3n%20%C2%B7%20Entrenamientos&descAlignY=58&descAlign=50)
 
-## Nutrition and workout tracking app
+## App de nutrición y entrenamientos
 
-Macros, routines, calendar, and profile in one app.  
-React frontend + Express backend + LibSQL (local SQLite / Turso on the live demo).
+Seguimiento de macros, rutinas, calendario y perfil en una sola app.  
+Frontend React + backend Express + LibSQL (SQLite local / Turso en demo).
 
 [![Live demo](https://img.shields.io/badge/Live%20demo-Vercel-black?style=for-the-badge&logo=vercel)](https://gym-app-opal-eight.vercel.app)
 
-> **Public demo:** no auth. Everyone shares the same user (`userId` 1). Fine for trying the UI; do not enter personal data.
+> **Demo pública:** sin auth. Todos comparten el mismo usuario (`userId` 1). Ideal para probar; no metas datos personales.
 >
 > API: [https://gym-app-otiw.onrender.com/api/health](https://gym-app-otiw.onrender.com/api/health)
 
-> **Legal notice / name:** “FitTrack” is a **placeholder name** for this portfolio demo. It is not a commercial product or a trademark of the author. Any similarity to third-party brands, apps, products, or companies (including those using the same or a similar name) is **coincidental and unintentional**. This project is not affiliated with, sponsored by, or related to them.
+> **Aviso legal / nombre:** «FitTrack» es un **nombre placeholder** de esta demo de portfolio. No es un producto comercial ni una marca registrada del autor. Cualquier coincidencia con marcas, apps, productos o empresas de terceros (incluidas las que usen el mismo o un nombre similar) es **casual y no intencionada**. Este proyecto no está afiliado, patrocinado ni relacionado con ellas.
 
 ---
 
-## Screenshots
+## Capturas
 
-![FitTrack nutrition](https://github.com/user-attachments/assets/08e98a3f-44d3-4a74-b0ec-40bc63b93104)
+![Nutrición FitTrack](https://github.com/user-attachments/assets/08e98a3f-44d3-4a74-b0ec-40bc63b93104)
 
-![FitTrack nutrition](https://github.com/user-attachments/assets/bc94e815-b05c-41ac-969f-a12c4e511832)
+![Nutrición FitTrack](https://github.com/user-attachments/assets/bc94e815-b05c-41ac-969f-a12c4e511832)
 
-![FitTrack nutrition](https://github.com/user-attachments/assets/f1d68a01-73d1-4bfd-a1e2-571f0134bb6d)
-
----
-
-## What it does
-
-
-| Module       | Description                                                      |
-| ------------ | ---------------------------------------------------------------- |
-| **Dashboard**  | Day overview: calories, macros, workouts, and weekly chart     |
-| **Nutrition**  | Meals, food search, and macro goals                            |
-| **Workout**    | Routines, exercises, and set logging                           |
-| **Calendar**   | Daily/monthly view of nutrition and workouts                   |
-| **Profile**    | User data, TDEE, and goals                                     |
-
+![Nutrición FitTrack](https://github.com/user-attachments/assets/f1d68a01-73d1-4bfd-a1e2-571f0134bb6d)
 
 ---
 
-## Project stack
+## Qué hace
 
-### Languages
+
+| Módulo         | Descripción                                                   |
+| -------------- | ------------------------------------------------------------- |
+| **Dashboard**  | Resumen del día: calorías, macros, entrenos y gráfica semanal |
+| **Nutrición**  | Comidas, búsqueda de alimentos y objetivos de macros          |
+| **Entreno**    | Rutinas, ejercicios y logs de series                          |
+| **Calendario** | Vista diaria/mensual de nutrición y workouts                  |
+| **Perfil**     | Datos del usuario, TDEE y metas                               |
+
+
+---
+
+## Stack del proyecto
+
+### Lenguajes
 
 <table>
   <tr>
@@ -69,15 +69,15 @@ React frontend + Express backend + LibSQL (local SQLite / Turso on the live demo
   </tr>
 </table>
 
-| Library            | Role                        |
-| ------------------ | --------------------------- |
-| **TanStack Query** | API cache and fetching      |
-| **Axios**          | HTTP client                 |
-| **Framer Motion**  | UI animations               |
-| **Recharts**       | Nutrition charts            |
-| **Lucide React**   | Icons                       |
-| **date-fns**       | Dates / Spanish locale      |
-| **react-calendar** | Calendar                    |
+| Librería           | Uso                     |
+| ------------------ | ----------------------- |
+| **TanStack Query** | Cache y fetching de API |
+| **Axios**          | Cliente HTTP            |
+| **Framer Motion**  | Animaciones UI          |
+| **Recharts**       | Gráficas de nutrición   |
+| **Lucide React**   | Iconos                  |
+| **date-fns**       | Fechas / locale ES      |
+| **react-calendar** | Calendario              |
 
 ### Backend
 
@@ -90,21 +90,21 @@ React frontend + Express backend + LibSQL (local SQLite / Turso on the live demo
   </tr>
 </table>
 
-| Piece               | Detail                                                                 |
-| ------------------- | ---------------------------------------------------------------------- |
-| **Express 5**       | REST API (`/api/...`)                                                  |
-| **Prisma + LibSQL** | ORM: local SQLite (`file:./dev.db`) or Turso (`libsql://...`) on demo |
-| **CORS / dotenv**   | Frontend origin + environment variables                                |
+| Pieza               | Detalle                                                              |
+| ------------------- | -------------------------------------------------------------------- |
+| **Express 5**       | API REST (`/api/...`)                                                |
+| **Prisma + LibSQL** | ORM: SQLite local (`file:./dev.db`) o Turso (`libsql://...`) en demo |
+| **CORS / dotenv**   | Origen frontend + variables de entorno                               |
 
 ### Deploy (demo)
 
-| Piece    | Host                                                  |
+| Pieza    | Host                                                  |
 | -------- | ----------------------------------------------------- |
 | Frontend | Vercel (`frontend/`, env `VITE_API_URL`)              |
 | API      | Render Web Service (`backend/`, `npm run start:prod`) |
 | DB       | Turso LibSQL (`DATABASE_URL` + `TURSO_AUTH_TOKEN`)    |
 
-Key variables (see `.env.example`):
+Variables clave (ver `.env.example`):
 
 ```bash
 # backend
@@ -121,7 +121,7 @@ Render: root `backend`, build `npm install && npm run build`, start `npm run sta
 Live UI: [https://gym-app-opal-eight.vercel.app](https://gym-app-opal-eight.vercel.app) — API: [https://gym-app-otiw.onrender.com](https://gym-app-otiw.onrender.com)  
 Vercel: root `frontend`.
 
-### Tooling
+### Herramientas
 
 <table>
   <tr>
@@ -135,28 +135,28 @@ Vercel: root `frontend`.
 
 ---
 
-## Structure
+## Estructura
 
 ```
 gym_app/
 ├── frontend/     # React + Vite + Tailwind (Vercel)
 ├── backend/      # Express + Prisma + LibSQL (Render)
 ├── package.json  # concurrently (dev frontend + backend)
-├── README.md     # English
-└── README_es.md  # Spanish
+├── README.md     # Inglés
+└── README_es.md  # Español
 ```
 
 ---
 
-## Getting started
+## Cómo arrancar
 
-Copy `.env.example` to `backend/.env` (local: `DATABASE_URL=file:./dev.db`).
+Copia `.env.example` a `backend/.env` (local: `DATABASE_URL=file:./dev.db`).
 
 ```bash
-# Dependencies
+# Dependencias
 npm run install:all
 
-# Migrations (first time / after clone)
+# Migraciones (primera vez / tras clonar)
 cd backend && npx prisma migrate deploy && cd ..
 
 # Dev (API + UI)
@@ -164,13 +164,13 @@ npm run dev
 ```
 
 
-| Service  | Typical URL             |
+| Servicio | URL típica              |
 | -------- | ----------------------- |
 | Frontend | `http://localhost:5173` |
 | Backend  | `http://localhost:3001` |
 
 
-Useful backend scripts:
+Scripts útiles backend:
 
 ```bash
 cd backend
@@ -182,42 +182,42 @@ npm run db:studio
 
 ## Tests
 
-Frontend uses **Vitest**. Current suite: **18** logic tests (no browser, no real API).
+Frontend usa **Vitest**. Suite actual: **18 tests** de lógica (sin browser ni API real).
 
 
-| File                             | Coverage                                                                                                                                                                      |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `frontend/src/lib/utils.test.ts` | Macros (`calcMacrosFromPer100g`), progress (`pct`, `remaining`), meal labels, Spanish dates (`dateToString`, `getWeekStart`, `formatDate`), greetings (`greetingForHour`) |
-| `frontend/src/lib/mock.test.ts`  | Nutrition, workout, and calendar fixtures                                                                                                                                     |
+| Archivo                          | Qué cubre                                                                                                                                                                |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `frontend/src/lib/utils.test.ts` | Macros (`calcMacrosFromPer100g`), progreso (`pct`, `remaining`), labels de comida, fechas ES (`dateToString`, `getWeekStart`, `formatDate`), saludos (`greetingForHour`) |
+| `frontend/src/lib/mock.test.ts`  | Fixtures de nutrición, workouts y calendario                                                                                                                             |
 
 
-### How to run them
+### Cómo ejecutarlos
 
-From the repo root:
+Desde la raíz del repo:
 
 ```bash
 npm test
 ```
 
-From `frontend/`:
+Desde `frontend/`:
 
 ```bash
 cd frontend
-npm test                 # single run
-npm run test:watch       # watch mode
-npx vitest run --reporter=verbose   # list each test
-npm run test:coverage    # coverage
+npm test                 # una pasada
+npm run test:watch       # modo watch
+npx vitest run --reporter=verbose   # lista cada test
+npm run test:coverage    # cobertura
 ```
 
 ---
 
-## Accessibility and SEO
+## Accesibilidad y SEO
 
-I did not try to game Google: this is a portfolio SPA. What mattered was keyboard use, screen readers understanding forms and buttons, and a usable card when the link is shared.
+No pretendí optimizar para Google a lo bestia: es una SPA de portfolio. Sí me importó que se pueda usar con teclado, que un lector de pantalla entienda formularios y botones, y que al compartir el enlace no salga una tarjeta vacía.
 
-Accessibility includes a skip link to main content, modals that close on Escape and keep focus trapped inside, real labels on the profile form, and `aria-label` where a control is icon-only. Also `:focus-visible` and respect for `prefers-reduced-motion`.
+En accesibilidad hay skip link al contenido, modales que se cierran con Escape y mantienen el foco dentro, labels reales en el perfil, y `aria-label` donde el botón es solo un icono. También `:focus-visible` y respeto a `prefers-reduced-motion`.
 
-For SEO there is a per-route title, description, Open Graph / Twitter tags, favicon, and a real `robots.txt` + `sitemap.xml` under `public/` (before that, Vercel served the app HTML and fooled crawlers).
+En SEO dejé title por página, description, Open Graph / Twitter, favicon y un `robots.txt` + `sitemap.xml` de verdad en `public/` (antes Vercel devolvía el HTML de la app y engañaba).
 
 ---
 
