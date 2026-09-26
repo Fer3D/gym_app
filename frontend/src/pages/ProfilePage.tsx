@@ -13,7 +13,7 @@ import {
 
 export function ProfilePage() {
   const qc = useQueryClient();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [langPref, setLangPref] = useState<LanguagePreference>(() => getLanguagePreference());
 
   const {
@@ -209,9 +209,6 @@ export function ProfilePage() {
             </button>
           ))}
         </div>
-        <p className="text-[10px] text-slate-500">
-          {i18n.language?.startsWith('en') ? 'EN' : 'ES'}
-        </p>
       </div>
 
       <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-4">
