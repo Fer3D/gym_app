@@ -3,7 +3,6 @@ import {
   mockNutritionDay,
   mockCalendarSummary,
   mockWorkouts,
-  withFallback,
 } from './mock';
 
 describe('mockNutritionDay', () => {
@@ -35,19 +34,5 @@ describe('mockCalendarSummary', () => {
     for (const key of keys) {
       expect(key.startsWith('2026-09-')).toBe(true);
     }
-  });
-});
-
-describe('withFallback', () => {
-  it('devuelve request si OK', async () => {
-    const value = await withFallback(async () => 42, 0);
-    expect(value).toBe(42);
-  });
-
-  it('usa fallback si falla', async () => {
-    const value = await withFallback(async () => {
-      throw new Error('API down');
-    }, { ok: false });
-    expect(value).toEqual({ ok: false });
   });
 });

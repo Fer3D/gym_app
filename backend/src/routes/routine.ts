@@ -291,12 +291,6 @@ routineRouter.get('/explore', (_req: Request, res: Response) => {
   return res.json(EXPLORE_ROUTINES);
 });
 
-routineRouter.get('/explore/:id', (req: Request, res: Response) => {
-  const routine = EXPLORE_ROUTINES.find((r) => r.id === String(req.params.id));
-  if (!routine) return res.status(404).json({ error: 'Rutina no encontrada' });
-  return res.json(routine);
-});
-
 routineRouter.get('/', async (_req: Request, res: Response) => {
   const routines = await prisma.routine.findMany({
     where: { userId: 1 },
@@ -328,25 +322,6 @@ routineRouter.post('/', async (req: Request, res: Response) => {
     return res.json({ ...routine, days: JSON.parse(routine.days) });
   } catch {
     return res.status(500).json({ error: 'Error al guardar la rutina' });
-  }
-});
-
-routineRouter.put('/:id', async (req: Request, res: Response) => {
-  try {
-    const { name, description, level, daysPerWeek, days } = req.body;
-    const routine = await prisma.routine.update({
-      where: { id: parseInt(String(req.params.id)) },
-      data: {
-        name,
-        description,
-        level,
-        daysPerWeek,
-        days: days ? JSON.stringify(days) : undefined,
-      },
-    });
-    return res.json({ ...routine, days: JSON.parse(routine.days) });
-  } catch {
-    return res.status(500).json({ error: 'Error al actualizar la rutina' });
   }
 });
 

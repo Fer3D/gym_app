@@ -38,29 +38,10 @@ class TTLCache<T = unknown> {
     this.store.delete(key);
   }
 
-  deleteByPrefix(prefix: string): number {
-    let count = 0;
-    for (const key of this.store.keys()) {
-      if (key.startsWith(prefix)) {
-        this.store.delete(key);
-        count++;
-      }
-    }
-    return count;
-  }
-
   ttlSeconds(key: string): number {
     const entry = this.store.get(key);
     if (!entry || Date.now() > entry.expiresAt) return 0;
     return Math.round((entry.expiresAt - Date.now()) / 1000);
-  }
-
-  stats() {
-    const now = Date.now();
-    const keys = [...this.store.entries()]
-      .filter(([, e]) => e.expiresAt > now)
-      .map(([k, e]) => ({ key: k, ttlSeconds: Math.round((e.expiresAt - now) / 1000) }));
-    return { size: keys.length, entries: keys };
   }
 
   private evict() {

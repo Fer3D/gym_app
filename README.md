@@ -142,12 +142,12 @@ npm run db:studio
 
 ## Tests
 
-Frontend usa **Vitest**. Suite actual: **20 tests** de lógica (sin browser ni API real).
+Frontend usa **Vitest**. Suite actual: **18 tests** de lógica (sin browser ni API real).
 
 | Archivo | Qué cubre |
 | --- | --- |
 | `frontend/src/lib/utils.test.ts` | Macros (`calcMacrosFromPer100g`), progreso (`pct`, `remaining`), labels de comida, fechas ES (`dateToString`, `getWeekStart`, `formatDate`), saludos (`greetingForHour`) |
-| `frontend/src/lib/mock.test.ts` | Datos mock (nutrición, workouts, calendario) y `withFallback` (API OK vs error) |
+| `frontend/src/lib/mock.test.ts` | Fixtures de nutrición, workouts y calendario |
 
 ### Cómo ejecutarlos
 

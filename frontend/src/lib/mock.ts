@@ -1,35 +1,11 @@
 import type {
   CalendarSummary,
   NutritionDay,
-  TdeeResult,
-  UserProfile,
-  WeeklyNutritionPoint,
   WorkoutLog,
-  Routine,
 } from '../types';
 import { format, subDays } from 'date-fns';
 
 const today = () => format(new Date(), 'yyyy-MM-dd');
-
-export const mockProfile: UserProfile = {
-  name: 'Carlos',
-  weight: 78.5,
-  height: 178,
-  birthDate: '1994-03-12',
-  gender: 'masculino',
-  objective: 'ganar_musculo',
-  calorieGoal: 2500,
-  proteinGoal: 180,
-  carbsGoal: 280,
-  fatsGoal: 75,
-};
-
-export const mockTdee: TdeeResult = {
-  bmr: 1780,
-  tdee: 2670,
-  goal: 2500,
-  activityMultiplier: 1.5,
-};
 
 export const mockNutritionDay = (date = today()): NutritionDay => ({
   date,
@@ -162,17 +138,6 @@ export const mockNutritionDay = (date = today()): NutritionDay => ({
   },
 });
 
-export const mockWeeklyNutrition = (): WeeklyNutritionPoint[] => {
-  const base = [1980, 2340, 2100, 2510, 1890, 2140, 2050];
-  return base.map((calories, i) => ({
-    date: format(subDays(new Date(), 6 - i), 'yyyy-MM-dd'),
-    calories,
-    proteins: Math.round(calories * 0.078),
-    carbs: Math.round(calories * 0.11),
-    fats: Math.round(calories * 0.03),
-  }));
-};
-
 export const mockWorkouts = (date = today()): WorkoutLog[] => [
   {
     id: 101,
@@ -224,40 +189,6 @@ export const mockWorkouts = (date = today()): WorkoutLog[] => [
   },
 ];
 
-export const mockRoutines: Routine[] = [
-  {
-    id: 1,
-    name: 'PPL Intermedio',
-    description: 'Push / Pull / Legs · 6 días',
-    level: 'intermedio',
-    daysPerWeek: 6,
-    source: 'user',
-    days: [
-      {
-        day: 1,
-        dayName: 'Push A',
-        exercises: [
-          { name: 'Bench Press', category: 'Fuerza', muscleGroup: 'Pecho', sets: 4, reps: 8 },
-          { name: 'Overhead Press', category: 'Fuerza', muscleGroup: 'Hombros', sets: 3, reps: 8 },
-          { name: 'Incline DB Press', category: 'Fuerza', muscleGroup: 'Pecho', sets: 3, reps: 10 },
-          { name: 'Lateral Raise', category: 'Aislamiento', muscleGroup: 'Hombros', sets: 3, reps: 12 },
-          { name: 'Tricep Pushdown', category: 'Aislamiento', muscleGroup: 'Tríceps', sets: 3, reps: 12 },
-          { name: 'Overhead Extension', category: 'Aislamiento', muscleGroup: 'Tríceps', sets: 3, reps: 12 },
-        ],
-      },
-      {
-        day: 2,
-        dayName: 'Pull A',
-        exercises: [
-          { name: 'Deadlift', category: 'Fuerza', muscleGroup: 'Espalda', sets: 3, reps: 5 },
-          { name: 'Pull-up', category: 'Fuerza', muscleGroup: 'Espalda', sets: 4, reps: 8 },
-          { name: 'Barbell Row', category: 'Fuerza', muscleGroup: 'Espalda', sets: 3, reps: 8 },
-        ],
-      },
-    ],
-  },
-];
-
 export const mockCalendarSummary = (year: number, month: number): CalendarSummary => {
   const days: CalendarSummary['days'] = {};
   const t = new Date();
@@ -283,12 +214,4 @@ export const mockCalendarSummary = (year: number, month: number): CalendarSummar
     };
   }
   return { calorieGoal: 2500, days };
-};
-
-export async function withFallback<T>(request: () => Promise<T>, fallback: T): Promise<T> {
-  try {
-    return await request();
-  } catch {
-    return fallback;
-  }
 }

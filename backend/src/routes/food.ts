@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import axios from 'axios';
-import { prisma } from '../lib/prisma';
 import { foodCache } from '../lib/cache';
 
 export const foodRouter = Router();
@@ -185,36 +184,6 @@ async function fetchOffSearch(q: string, page: number, pageSize = 24): Promise<u
   return merged.map(formatProduct).filter(Boolean).slice(0, pageSize);
 }
 
-async function searchCustomFoods(q: string) {
-  const foods = await prisma.customFood.findMany({
-    where: {
-      userId: 1,
-      OR: [
-        { name: { contains: q } },
-        { brand: { contains: q } },
-      ],
-    },
-    take: 24,
-    orderBy: { createdAt: 'desc' },
-  });
-  return foods.map((f) => ({
-    id: `custom-${f.id}`,
-    name: f.name,
-    brand: f.brand || 'Personalizado',
-    imageUrl: null,
-    servingSize: f.servingSize,
-    per100g: {
-      calories: f.calories,
-      proteins: f.proteins,
-      carbs: f.carbs,
-      fats: f.fats,
-      fiber: f.fiber,
-      sugar: f.sugar,
-      sodium: f.sodium,
-    },
-  }));
-}
-
 foodRouter.get('/search/stream', async (req: Request, res: Response) => {
   const q = String(req.query.q || '').trim();
   const page = parseInt(String(req.query.page || '1'), 10) || 1;
@@ -271,98 +240,12 @@ foodRouter.get('/search/stream', async (req: Request, res: Response) => {
     }
   } catch (err) {
     console.error('OFF search failed:', err instanceof Error ? err.message : err);
-    try {
-      const custom = await searchCustomFoods(q);
-      if (custom.length > 0) {
-        sendSSE(res, {
-          products: custom,
-          cached: false,
-          done: true,
-          total: custom.length,
-          degraded: true,
-          message: 'Open Food Facts no responde; mostrando alimentos personalizados',
-        });
-      } else {
-        sendSSE(res, {
-          error: 'Open Food Facts no disponible. Reintenta en unos segundos.',
-          done: true,
-        });
-      }
-    } catch {
-      sendSSE(res, { error: 'Error al buscar alimentos', done: true });
-    }
+    sendSSE(res, {
+      error: 'Open Food Facts no disponible. Reintenta en unos segundos.',
+      done: true,
+    });
   } finally {
     res.end();
-  }
-});
-
-foodRouter.get('/search', async (req: Request, res: Response) => {
-  try {
-    const { q, page = 1 } = req.query;
-    if (!q) return res.status(400).json({ error: 'Término de búsqueda requerido' });
-
-    const cacheKey = `search:es-retail-v4:${String(q).toLowerCase()}:${page}`;
-    if (foodCache.has(cacheKey)) {
-      const cached = foodCache.get(cacheKey) as unknown[];
-      res.setHeader('X-Cache', 'HIT');
-      return res.json({ products: cached, total: cached.length, cached: true });
-    }
-
-    const products = await fetchOffSearch(String(q), Number(page) || 1);
-    foodCache.set(cacheKey, products);
-    res.setHeader('X-Cache', 'MISS');
-    return res.json({ products, total: products.length });
-  } catch (error) {
-    console.error('Error buscando alimentos:', error);
-    try {
-      const custom = await searchCustomFoods(String(req.query.q || ''));
-      if (custom.length > 0) {
-        return res.status(200).json({
-          products: custom,
-          total: custom.length,
-          degraded: true,
-          message: 'Open Food Facts no responde; mostrando alimentos personalizados',
-        });
-      }
-    } catch { }
-    return res.status(503).json({ error: 'Open Food Facts no disponible. Reintenta en unos segundos.' });
-  }
-});
-
-foodRouter.delete('/cache', (_req: Request, res: Response) => {
-  const deleted = foodCache.deleteByPrefix('search:');
-  return res.json({ ok: true, deleted, message: `${deleted} entradas eliminadas de la caché` });
-});
-
-foodRouter.get('/cache/stats', (_req: Request, res: Response) => {
-  return res.json(foodCache.stats());
-});
-
-foodRouter.get('/barcode/:code', async (req: Request, res: Response) => {
-  try {
-    const code = String(req.params.code);
-    const cacheKey = `barcode:${code}`;
-    if (foodCache.has(cacheKey)) return res.json(foodCache.get(cacheKey));
-
-    let lastError: unknown;
-    for (const host of OFF_HOSTS) {
-      try {
-        const response = await axios.get(`${host}/api/v2/product/${code}.json`, {
-          headers: { 'User-Agent': OFF_UA },
-          timeout: 8000,
-        });
-        if (response.data.status === 0) return res.status(404).json({ error: 'Producto no encontrado' });
-        const product = formatProduct(response.data.product);
-        if (product) foodCache.set(cacheKey, [product] as unknown[], 60 * 60 * 1000);
-        return res.json(product);
-      } catch (err) {
-        lastError = err;
-      }
-    }
-    console.error('barcode fail:', lastError);
-    return res.status(503).json({ error: 'Open Food Facts no disponible' });
-  } catch {
-    return res.status(500).json({ error: 'Error al obtener el producto' });
   }
 });
 
@@ -439,50 +322,6 @@ foodRouter.get('/popular', async (req: Request, res: Response) => {
   } catch {
     return res.status(503).json({ error: 'Error al obtener alimentos populares' });
   }
-});
-
-foodRouter.get('/custom', async (_req: Request, res: Response) => {
-  const foods = await prisma.customFood.findMany({ where: { userId: 1 }, orderBy: { createdAt: 'desc' } });
-  return res.json(foods);
-});
-
-foodRouter.post('/custom', async (req: Request, res: Response) => {
-  try {
-    const body = req.body && typeof req.body === 'object' ? req.body as Record<string, unknown> : {};
-    const name = typeof body.name === 'string' ? body.name.trim() : '';
-    if (!name || name.length > 120) return res.status(400).json({ error: 'Nombre inválido' });
-    const num = (v: unknown, fallback = 0) => {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : fallback;
-    };
-    const food = await prisma.customFood.create({
-      data: {
-        userId: 1,
-        name,
-        brand: typeof body.brand === 'string' ? body.brand.trim() : null,
-        calories: num(body.calories),
-        proteins: num(body.proteins),
-        carbs: num(body.carbs),
-        fats: num(body.fats),
-        fiber: num(body.fiber),
-        sugar: num(body.sugar),
-        sodium: num(body.sodium),
-        servingSize: num(body.servingSize, 100) || 100,
-      },
-    });
-    return res.json(food);
-  } catch {
-    return res.status(500).json({ error: 'Error al crear alimento personalizado' });
-  }
-});
-
-foodRouter.delete('/custom/:id', async (req: Request, res: Response) => {
-  const id = parseInt(String(req.params.id), 10);
-  if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID inválido' });
-  const existing = await prisma.customFood.findFirst({ where: { id, userId: 1 } });
-  if (!existing) return res.status(404).json({ error: 'Alimento no encontrado' });
-  await prisma.customFood.delete({ where: { id } });
-  return res.json({ success: true });
 });
 
 function formatProduct(p: Record<string, unknown>) {

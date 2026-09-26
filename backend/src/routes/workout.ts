@@ -30,39 +30,6 @@ workoutRouter.post('/day/:date', async (req: Request, res: Response) => {
   }
 });
 
-workoutRouter.put('/:id', async (req: Request, res: Response) => {
-  const body = req.body && typeof req.body === 'object' ? req.body as Record<string, unknown> : {};
-  const data: { name?: string; notes?: string | null; duration?: number | null } = {};
-
-  if ('name' in body) {
-    if (typeof body.name !== 'string' || !body.name.trim() || body.name.length > 120) {
-      return res.status(400).json({ error: 'Nombre inválido' });
-    }
-    data.name = body.name.trim();
-  }
-  if ('notes' in body) {
-    if (body.notes === null || body.notes === '') data.notes = null;
-    else if (typeof body.notes === 'string' && body.notes.length <= 2000) data.notes = body.notes;
-    else return res.status(400).json({ error: 'Notas inválidas' });
-  }
-  if ('duration' in body) {
-    if (body.duration === null || body.duration === '') data.duration = null;
-    else {
-      const d = Number(body.duration);
-      if (!Number.isFinite(d) || d < 0 || d > 600) return res.status(400).json({ error: 'Duración inválida' });
-      data.duration = Math.round(d);
-    }
-  }
-  if (Object.keys(data).length === 0) return res.status(400).json({ error: 'Sin campos válidos' });
-
-  const updated = await prisma.workoutLog.update({
-    where: { id: parseInt(String(req.params.id)) },
-    data,
-    include: { exerciseLogs: { include: { sets: true } } },
-  });
-  return res.json(updated);
-});
-
 workoutRouter.delete('/:id', async (req: Request, res: Response) => {
   await prisma.workoutLog.delete({ where: { id: parseInt(String(req.params.id)) } });
   return res.json({ success: true });
@@ -192,57 +159,4 @@ workoutRouter.put('/set/:id', async (req: Request, res: Response) => {
 workoutRouter.delete('/set/:id', async (req: Request, res: Response) => {
   await prisma.exerciseSet.delete({ where: { id: parseInt(String(req.params.id)) } });
   return res.json({ success: true });
-});
-
-workoutRouter.get('/progress/:exerciseName', async (req: Request, res: Response) => {
-  const exerciseName = decodeURIComponent(String(req.params.exerciseName));
-  const logs = await prisma.exerciseLog.findMany({
-    where: { exerciseName: { contains: exerciseName } },
-    include: {
-      sets: true,
-      workoutLog: { select: { date: true } },
-    },
-    orderBy: { workoutLog: { date: 'asc' } },
-    take: 50,
-  });
-
-  const progress = logs.map((log) => {
-    const maxWeight = Math.max(...log.sets.map((s) => s.weight || 0));
-    const totalVolume = log.sets.reduce((sum, s) => sum + (s.weight || 0) * (s.reps || 0), 0);
-    return {
-      date: log.workoutLog.date,
-      maxWeight,
-      totalVolume,
-      sets: log.sets.length,
-    };
-  });
-
-  return res.json(progress);
-});
-
-workoutRouter.get('/stats/weekly/:startDate', async (req: Request, res: Response) => {
-  const startDate = String(req.params.startDate);
-  const start = new Date(startDate);
-  const dates: string[] = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(start);
-    d.setDate(d.getDate() + i);
-    dates.push(d.toISOString().split('T')[0]);
-  }
-
-  const workouts = await prisma.workoutLog.findMany({
-    where: { date: { in: dates }, userId: 1 },
-    include: { exerciseLogs: { include: { sets: true } } },
-  });
-
-  const stats = dates.map((date) => {
-    const dayWorkouts = workouts.filter((w) => w.date === date);
-    const totalSets = dayWorkouts.reduce((sum, w) => sum + w.exerciseLogs.reduce((s, e) => s + e.sets.length, 0), 0);
-    const totalVolume = dayWorkouts.reduce((sum, w) =>
-      sum + w.exerciseLogs.reduce((s, e) =>
-        s + e.sets.reduce((sv, set) => sv + (set.weight || 0) * (set.reps || 0), 0), 0), 0);
-    return { date, workouts: dayWorkouts.length, totalSets, totalVolume };
-  });
-
-  return res.json(stats);
 });

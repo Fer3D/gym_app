@@ -19,16 +19,6 @@ export function formatDateLabel(date: string) {
   return format(d, "EEEE, d MMMM", { locale: es });
 }
 
-export function formatPageDate(date: string | Date = new Date()) {
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  return format(d, "EEEE, d MMMM", { locale: es });
-}
-
-export function formatDayBanner(date: string | Date = new Date()) {
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  return format(d, 'EEEE, d MMMM', { locale: es }).toUpperCase();
-}
-
 export function greetingForHour(date = new Date()) {
   const h = date.getHours();
   if (h < 12) return 'Buenos días';
@@ -73,10 +63,6 @@ export function getMealLabel(mealType: string) {
     snack: 'Snacks',
   };
   return labels[mealType] || mealType;
-}
-
-export function getMealIcon(_mealType: string) {
-  return '';
 }
 
 export function pct(value: number, goal: number) {

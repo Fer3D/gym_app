@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, Package, RefreshCw, Zap, Clock } from 'lucide-react';
 import { foodApi } from '../../lib/api';
 import type { FoodProduct } from '../../lib/utils';
-import { calcMacrosFromPer100g } from '../../lib/utils';
+import { calcMacrosFromPer100g, getMealLabel } from '../../lib/utils';
 import { Spinner } from '../common/UI';
 
 interface FoodSearchProps {
@@ -79,7 +79,6 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
         setProducts((prev) => [...prev, ...(data.products || [])]);
         setWasCached(data.cached ?? false);
         setCacheTTL(data.ttlSeconds ?? 0);
-        if (data.degraded && data.message) setErrorMsg(String(data.message));
         setSearchState(data.cached ? 'done' : 'streaming');
 
         if (data.done) {
@@ -96,7 +95,6 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
     };
 
     es.onerror = () => {
-
       if (finishedRef.current) {
         es.close();
         return;
@@ -122,10 +120,7 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
   const displayProducts: FoodProduct[] =
     debouncedQ.length > 1 ? products : (popular?.products || []);
 
-  const mealLabels: Record<string, string> = {
-    desayuno: 'Desayuno', almuerzo: 'Almuerzo', cena: 'Cena', snack: 'Snack',
-  };
-
+  const mealLabel = getMealLabel(mealType);
   const macros = selected ? calcMacrosFromPer100g(selected.per100g, quantity) : null;
   const isSearching = searchState === 'loading' || searchState === 'streaming';
 
@@ -143,7 +138,7 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
           <div className="flex-1 min-w-0">
             <p className="text-white font-medium text-sm leading-tight line-clamp-2">{selected.name}</p>
             {selected.brand && <p className="text-slate-400 text-xs mt-0.5">{selected.brand}</p>}
-            <p className="text-indigo-400 text-xs mt-1 font-medium">{mealLabels[mealType]}</p>
+            <p className="text-indigo-400 text-xs mt-1 font-medium">{mealLabel}</p>
           </div>
         </div>
 
@@ -203,7 +198,7 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
             onClick={() => { if (macros) onSelect(selected, quantity); }}
             className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 transition-colors"
           >
-            Añadir al {mealLabels[mealType]}
+            Añadir al {mealLabel}
           </button>
         </div>
       </div>
@@ -260,9 +255,6 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
                 <span className="text-slate-500">{products.length} súper España · popularidad</span>
               )}
               {searchState === 'error' && <span className="text-red-400">{errorMsg || 'Error al buscar'}</span>}
-              {searchState === 'done' && errorMsg && !wasCached && (
-                <span className="text-amber-400">{errorMsg}</span>
-              )}
             </span>
             {(searchState === 'done' && wasCached) || searchState === 'error' ? (
               <button

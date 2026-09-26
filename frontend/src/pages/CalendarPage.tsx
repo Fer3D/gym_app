@@ -14,7 +14,6 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import { calendarApi } from '../lib/api';
-import { mockCalendarSummary, withFallback } from '../lib/mock';
 import { cn, dateToString, formatDateLabel, pct } from '../lib/utils';
 import type { CalendarDaySummary } from '../types';
 
@@ -53,13 +52,9 @@ export function CalendarPage() {
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth() + 1;
 
-  const { data: summary, isLoading } = useQuery({
+  const { data: summary, isLoading, isError, refetch } = useQuery({
     queryKey: ['calendar-summary', year, month],
-    queryFn: () =>
-      withFallback(
-        () => calendarApi.summary(year, month).then((r) => r.data),
-        mockCalendarSummary(year, month)
-      ),
+    queryFn: () => calendarApi.summary(year, month).then((r) => r.data),
     staleTime: 2 * 60 * 1000,
   });
 
@@ -182,7 +177,22 @@ export function CalendarPage() {
               transition={{ duration: 0.15 }}
               className="min-h-[280px] rounded-lg border border-[#2a2f3a] bg-[#14171c]"
             >
-              {!hasAnyActivity ? (
+              {isLoading && !summary ? (
+                <div className="flex h-full min-h-[280px] items-center justify-center text-sm text-[#9aa3b2]">
+                  Cargando mes…
+                </div>
+              ) : isError ? (
+                <div className="flex h-full min-h-[280px] flex-col items-center justify-center px-5 py-10 text-center">
+                  <p className="text-sm text-[#e25c5c]">No se pudo cargar el calendario.</p>
+                  <button
+                    type="button"
+                    onClick={() => refetch()}
+                    className="mt-4 h-10 rounded-md border border-[#2a2f3a] bg-[#1b1f27] px-4 text-sm text-[#eef0f3]"
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              ) : !hasAnyActivity ? (
                 <div className="flex h-full min-h-[280px] flex-col items-center justify-center px-5 py-10 text-center">
                   <p className="text-sm text-[#9aa3b2]">Sin actividad este día.</p>
                   <p className="mt-1 max-w-[240px] text-xs text-[#6b7385]">
@@ -244,10 +254,7 @@ export function CalendarPage() {
                               dayData.nutrition.goalMet ? 'bg-[#3ecf8e]' : 'bg-[#9aa3b2]'
                             )}
                             style={{
-                              width: `${Math.min(
-                                100,
-                                pct(dayData.nutrition.calories, calorieGoal)
-                              )}%`,
+                              width: `${pct(dayData.nutrition.calories, calorieGoal)}%`,
                             }}
                           />
                         </div>

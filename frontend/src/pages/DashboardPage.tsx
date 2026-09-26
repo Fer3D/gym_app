@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { CalendarDays, Flame, Dumbbell, TrendingUp, ArrowRight, Target } from 'lucide-react';
 import { nutritionApi, workoutApi, userApi } from '../lib/api';
-import { todayString, formatDateLabel, getWeekStart } from '../lib/utils';
+import { todayString, formatDateLabel, getWeekStart, greetingForHour, remaining } from '../lib/utils';
 import { MacroRing, StatsCard, Spinner } from '../components/common/UI';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
@@ -41,7 +41,7 @@ export function DashboardPage() {
 
   const calorieGoal = Math.max(800, profile?.calorieGoal || 2000);
   const totals = todayNutrition?.totals || { calories: 0, proteins: 0, carbs: 0, fats: 0 };
-  const remaining = Math.max(0, calorieGoal - totals.calories);
+  const kcalLeft = remaining(totals.calories, calorieGoal);
 
   const chartData = (weeklyNutrition || []).map((d: any) => ({
     date: format(parseISO(d.date), 'EEE', { locale: es }),
@@ -59,7 +59,7 @@ export function DashboardPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">
-            Hola, {profile?.name || 'Atleta'} 👋
+            {greetingForHour()}, {profile?.name || 'Atleta'}
           </h1>
           <p className="text-slate-400 text-sm mt-0.5 capitalize">
             {formatDateLabel(today)}
@@ -110,10 +110,10 @@ export function DashboardPage() {
           />
           <StatsCard
             title="Restantes"
-            value={`${Math.round(remaining)} kcal`}
+            value={`${Math.round(kcalLeft)} kcal`}
             subtitle="Por consumir"
             icon="🎯"
-            color={remaining < 200 ? 'green' : 'cyan'}
+            color={kcalLeft < 200 ? 'green' : 'cyan'}
           />
           <StatsCard
             title="Proteínas"

@@ -10,9 +10,13 @@ import { userRouter } from './routes/user';
 import { calendarRouter } from './routes/calendar';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = Number(process.env.PORT) || 3001;
+const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174'], credentials: true }));
+app.use(cors({ origin: corsOrigins, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -26,6 +30,12 @@ app.use('/api/calendar', calendarRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'OK', message: 'FitTrack ES API funcionando correctamente', timestamp: new Date().toISOString() });
+});
+
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error(err);
+  if (res.headersSent) return;
+  res.status(500).json({ error: 'Error interno' });
 });
 
 app.listen(PORT, () => {

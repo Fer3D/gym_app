@@ -65,62 +65,9 @@ nutritionRouter.post('/day/:date/meal', async (req: Request, res: Response) => {
   }
 });
 
-nutritionRouter.put('/meal/:id', async (req: Request, res: Response) => {
-  try {
-    const id = String(req.params.id);
-    const { quantity, mealType } = req.body;
-    const existing = await prisma.mealLog.findUnique({ where: { id: parseInt(id) } });
-    if (!existing) return res.status(404).json({ error: 'No encontrado' });
-
-    const factor = parseFloat(quantity) / existing.quantity;
-    const updated = await prisma.mealLog.update({
-      where: { id: parseInt(String(id)) },
-      data: {
-        quantity: parseFloat(quantity),
-        mealType: mealType || existing.mealType,
-        calories: existing.calories * factor,
-        proteins: existing.proteins * factor,
-        carbs: existing.carbs * factor,
-        fats: existing.fats * factor,
-        fiber: existing.fiber * factor,
-        sugar: existing.sugar * factor,
-        sodium: existing.sodium * factor,
-      },
-    });
-    return res.json(updated);
-  } catch {
-    return res.status(500).json({ error: 'Error al actualizar comida' });
-  }
-});
-
 nutritionRouter.delete('/meal/:id', async (req: Request, res: Response) => {
   await prisma.mealLog.delete({ where: { id: parseInt(String(req.params.id)) } });
   return res.json({ success: true });
-});
-
-nutritionRouter.patch('/day/:date', async (req: Request, res: Response) => {
-  const date = String(req.params.date);
-  const log = await getOrCreateDailyLog(date);
-  const body = req.body && typeof req.body === 'object' ? req.body as Record<string, unknown> : {};
-  const data: { notes?: string | null; weight?: number | null } = {};
-
-  if ('notes' in body) {
-    if (body.notes === null || body.notes === '') data.notes = null;
-    else if (typeof body.notes === 'string' && body.notes.length <= 2000) data.notes = body.notes;
-    else return res.status(400).json({ error: 'Notas inválidas' });
-  }
-  if ('weight' in body) {
-    if (body.weight === null || body.weight === '') data.weight = null;
-    else {
-      const w = Number(body.weight);
-      if (!Number.isFinite(w) || w < 20 || w > 400) return res.status(400).json({ error: 'Peso inválido' });
-      data.weight = w;
-    }
-  }
-  if (Object.keys(data).length === 0) return res.status(400).json({ error: 'Sin campos válidos' });
-
-  const updated = await prisma.dailyLog.update({ where: { id: log.id }, data });
-  return res.json(updated);
 });
 
 nutritionRouter.get('/stats/weekly/:startDate', async (req: Request, res: Response) => {
@@ -143,25 +90,6 @@ nutritionRouter.get('/stats/weekly/:startDate', async (req: Request, res: Respon
     const totals = log ? calculateTotals(log.mealLogs || []) : emptyTotals();
     return { date, ...totals, weight: log?.weight || null };
   });
-
-  return res.json(stats);
-});
-
-nutritionRouter.get('/stats/monthly/:year/:month', async (req: Request, res: Response) => {
-  const year = String(req.params.year);
-  const month = String(req.params.month);
-  const prefix = `${year}-${month.padStart(2, '0')}`;
-
-  const logs = await prisma.dailyLog.findMany({
-    where: { date: { startsWith: prefix }, userId: 1 },
-    include: { mealLogs: true },
-  }) as any[];
-
-  const stats = logs.map((log: any) => ({
-    date: log.date,
-    ...calculateTotals(log.mealLogs || []),
-    weight: log.weight,
-  }));
 
   return res.json(stats);
 });

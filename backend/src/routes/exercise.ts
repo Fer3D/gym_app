@@ -90,39 +90,12 @@ exerciseRouter.get('/list', async (req: Request, res: Response) => {
   }
 });
 
-exerciseRouter.get('/:id', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${WGER_BASE}/exerciseinfo/${req.params.id}/?format=json`, { timeout: 8000 });
-    return res.json(formatExercise(response.data));
-  } catch {
-    return res.status(404).json({ error: 'Ejercicio no encontrado' });
-  }
-});
-
 exerciseRouter.get('/meta/categories', async (_req: Request, res: Response) => {
   try {
     const response = await axios.get(`${WGER_BASE}/exercisecategory/?format=json&limit=100`, { timeout: 8000 });
     return res.json(response.data.results || []);
   } catch {
     return res.status(500).json({ error: 'Error al obtener categorías' });
-  }
-});
-
-exerciseRouter.get('/meta/muscles', async (_req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${WGER_BASE}/muscle/?format=json&limit=100`, { timeout: 8000 });
-    return res.json(response.data.results || []);
-  } catch {
-    return res.status(500).json({ error: 'Error al obtener músculos' });
-  }
-});
-
-exerciseRouter.get('/meta/equipment', async (_req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${WGER_BASE}/equipment/?format=json&limit=100`, { timeout: 8000 });
-    return res.json(response.data.results || []);
-  } catch {
-    return res.status(500).json({ error: 'Error al obtener equipamiento' });
   }
 });
 

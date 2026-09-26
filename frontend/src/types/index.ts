@@ -49,13 +49,6 @@ export interface NutritionDay {
   weight?: number | null;
 }
 
-export interface NutritionGoal {
-  calorieGoal: number;
-  proteinGoal: number;
-  carbsGoal: number;
-  fatsGoal: number;
-}
-
 export interface UserProfile {
   name: string;
   weight?: number | null;
@@ -176,11 +169,4 @@ export interface CalendarDaySummary {
 export interface CalendarSummary {
   calorieGoal: number;
   days: Record<string, CalendarDaySummary>;
-}
-
-export interface DailySummary {
-  date: string;
-  nutrition: Macros;
-  workouts: WorkoutLog[];
-  goals: NutritionGoal;
 }
