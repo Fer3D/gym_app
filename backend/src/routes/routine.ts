@@ -355,7 +355,7 @@ routineRouter.post('/:id/start', async (req: Request, res: Response) => {
         date: String(date),
         userId: 1,
         name: `${routine.name} — ${selectedDay.dayName}`,
-        notes: `Iniciado desde la rutina "${routine.name}"`,
+        notes: null,
       },
       include: { exerciseLogs: { include: { sets: true } } },
     });
@@ -402,7 +402,7 @@ routineRouter.post('/explore/:id/start', async (req: Request, res: Response) => 
         date: String(date),
         userId: 1,
         name: `${routine.name} — ${selectedDay.dayName}`,
-        notes: `Iniciado desde "${routine.name}"`,
+        notes: null,
       },
       include: { exerciseLogs: { include: { sets: true } } },
     });

@@ -791,7 +791,6 @@ function ExerciseCard({
   const { t } = useTranslation();
   const restOptions = useMemo(() => buildRestOptions(t('workout.restNone')), [t]);
   const [collapsed, setCollapsed] = useState(false);
-  const [note, setNote] = useState(exercise.notes || '');
   const [restTimer, setRestTimer] = useState<number | null>(null);
   const [weightWarning, setWeightWarning] = useState<string | null>(null);
 
@@ -800,19 +799,6 @@ function ExerciseCard({
     queryFn: () => workoutApi.exerciseHistory(exercise.exerciseId).then((r) => r.data as { weight: number }[]),
     staleTime: 60_000,
   });
-
-  useEffect(() => {
-    setNote(exercise.notes || '');
-  }, [exercise.notes]);
-
-  useEffect(() => {
-    const t = window.setTimeout(() => {
-      if ((exercise.notes || '') !== note) {
-        onUpdateExercise({ notes: note || null });
-      }
-    }, 500);
-    return () => window.clearTimeout(t);
-  }, [note, exercise.notes, onUpdateExercise]);
 
   const nextSet = (exercise.sets?.length || 0) + 1;
   const last = exercise.sets?.[exercise.sets.length - 1];
@@ -911,17 +897,6 @@ function ExerciseCard({
 
       {!collapsed && (
         <div className="space-y-3 border-t border-white/5 px-4 pb-4 pt-3">
-          <div>
-            <label className="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">{t('workout.note')}</label>
-            <input
-              type="text"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder={t('workout.notePlaceholder')}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
-            />
-          </div>
-
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-xs text-slate-400">
               <span>{t('workout.rest')}</span>

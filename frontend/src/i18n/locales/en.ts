@@ -70,6 +70,7 @@ const en = {
     personalInfo: 'Personal information',
     name: 'Name',
     namePlaceholder: 'Your name',
+    nameDisabled: 'Fixed name (editing disabled).',
     genderLabel: 'Biological sex (for TDEE)',
     gender: {
       masculino: 'Male',

@@ -76,7 +76,7 @@ export function DashboardPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">
-            {greetingForHour()}, {profile?.name || t('common.athlete')}
+            {greetingForHour()}, {t('common.athlete')}
           </h1>
           <p className="text-slate-400 text-sm mt-0.5 capitalize">
             {formatDateLabel(today)}

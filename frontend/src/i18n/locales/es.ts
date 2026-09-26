@@ -95,6 +95,7 @@ const es = {
     personalInfo: 'Información Personal',
     name: 'Nombre',
     namePlaceholder: 'Tu nombre',
+    nameDisabled: 'Nombre fijo (edición deshabilitada).',
     genderLabel: 'Sexo biológico (para calcular TDEE)',
     gender: {
       masculino: 'Masculino',

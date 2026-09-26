@@ -80,9 +80,14 @@ workoutRouter.get('/exercise-history/:exerciseId', async (req: Request, res: Res
 
 workoutRouter.post('/day/:date', async (req: Request, res: Response) => {
   try {
-    const { name, notes } = req.body;
+    if (req.body?.notes != null && String(req.body.notes).trim() !== '') {
+      return res.status(400).json({ error: 'Notas deshabilitadas' });
+    }
+    const name = typeof req.body?.name === 'string' && req.body.name.trim()
+      ? req.body.name.trim().slice(0, 80)
+      : 'Mi entrenamiento';
     const workout = await prisma.workoutLog.create({
-      data: { date: String(req.params.date), userId: 1, name: name || 'Mi entrenamiento', notes },
+      data: { date: String(req.params.date), userId: 1, name, notes: null },
       include: { exerciseLogs: { include: { sets: true } } },
     });
     return res.json(workout);
@@ -101,6 +106,10 @@ workoutRouter.post('/:workoutId/exercise', async (req: Request, res: Response) =
     const workoutLogId = parseInt(String(req.params.workoutId));
     const { exerciseId, exerciseName, muscleGroup, category, notes, order, restSeconds, repMode, imageUrl } = req.body;
 
+    if (notes != null && String(notes).trim() !== '') {
+      return res.status(400).json({ error: 'Notas deshabilitadas' });
+    }
+
     let nextOrder = typeof order === 'number' && Number.isFinite(order) ? Math.round(order) : NaN;
     if (!Number.isFinite(nextOrder)) {
       const agg = await prisma.exerciseLog.aggregate({
@@ -118,7 +127,7 @@ workoutRouter.post('/:workoutId/exercise', async (req: Request, res: Response) =
         muscleGroup: muscleGroup || null,
         category: category || null,
         imageUrl: typeof imageUrl === 'string' && imageUrl.length > 0 ? imageUrl.slice(0, 500) : null,
-        notes: notes || null,
+        notes: null,
         restSeconds: typeof restSeconds === 'number' ? restSeconds : 120,
         repMode: REP_MODES.has(repMode) ? repMode : 'reps',
         order: nextOrder,
@@ -185,15 +194,12 @@ workoutRouter.put('/:workoutId/exercises/reorder', async (req: Request, res: Res
 workoutRouter.put('/exercise/:id', async (req: Request, res: Response) => {
   const body = req.body && typeof req.body === 'object' ? (req.body as Record<string, unknown>) : {};
   const data: {
-    notes?: string | null;
     restSeconds?: number | null;
     repMode?: string;
   } = {};
 
-  if ('notes' in body) {
-    if (body.notes === null || body.notes === '') data.notes = null;
-    else if (typeof body.notes === 'string' && body.notes.length <= 500) data.notes = body.notes;
-    else return res.status(400).json({ error: 'notes inválida' });
+  if ('notes' in body && body.notes != null && String(body.notes).trim() !== '') {
+    return res.status(400).json({ error: 'Notas deshabilitadas' });
   }
   if ('restSeconds' in body) {
     const n = intOrNull(body.restSeconds, 0, 3600);

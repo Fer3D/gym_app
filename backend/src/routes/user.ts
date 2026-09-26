@@ -33,10 +33,7 @@ function parseProfileUpdate(body: unknown): { data?: Prisma.UserUpdateInput; err
   const data: Prisma.UserUpdateInput = {};
 
   if ('name' in raw) {
-    if (typeof raw.name !== 'string') return { error: 'Nombre inválido' };
-    const name = raw.name.trim();
-    if (!name || name.length > 80) return { error: 'Nombre inválido' };
-    data.name = name;
+    return { error: 'Nombre de usuario deshabilitado' };
   }
 
   if ('weight' in raw) {

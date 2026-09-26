@@ -33,7 +33,6 @@ export function ProfilePage() {
   });
 
   const [form, setForm] = useState({
-    name: '',
     weight: '',
     height: '',
     birthDate: '',
@@ -50,7 +49,6 @@ export function ProfilePage() {
   useEffect(() => {
     if (profile) {
       setForm({
-        name: profile.name || '',
         weight: profile.weight != null ? String(profile.weight) : '',
         height: profile.height != null ? String(profile.height) : '',
         birthDate: profile.birthDate ? profile.birthDate.split('T')[0] : '',
@@ -219,19 +217,12 @@ export function ProfilePage() {
 
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-2xl font-bold text-white">
-            {(form.name || 'U')[0].toUpperCase()}
+            {t('common.athlete').charAt(0).toUpperCase()}
           </div>
           <div className="flex-1">
-            <label htmlFor="profile-name" className="text-slate-400 text-xs mb-1 block">{t('profile.name')}</label>
-            <input
-              id="profile-name"
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
-              placeholder={t('profile.namePlaceholder')}
-              autoComplete="name"
-            />
+            <p className="text-slate-400 text-xs mb-1">{t('profile.name')}</p>
+            <p className="text-white text-sm font-medium">{t('common.athlete')}</p>
+            <p className="text-slate-500 text-xs mt-1">{t('profile.nameDisabled')}</p>
           </div>
         </div>
 
