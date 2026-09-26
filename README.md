@@ -205,4 +205,4 @@ En SEO dejé title por página, description, Open Graph / Twitter, favicon y un 
 
 ---
 
-![Follow Me](https://img.shields.io/github/followers/Fer3D?label=Follow%20Me&style=social)
+[![Follow Me](https://img.shields.io/github/followers/Fer3D?label=Follow%20Me&style=social)](https://github.com/Fer3D)
