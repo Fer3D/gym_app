@@ -98,10 +98,21 @@ workoutRouter.delete('/:id', async (req: Request, res: Response) => {
 
 workoutRouter.post('/:workoutId/exercise', async (req: Request, res: Response) => {
   try {
+    const workoutLogId = parseInt(String(req.params.workoutId));
     const { exerciseId, exerciseName, muscleGroup, category, notes, order, restSeconds, repMode, imageUrl } = req.body;
+
+    let nextOrder = typeof order === 'number' && Number.isFinite(order) ? Math.round(order) : NaN;
+    if (!Number.isFinite(nextOrder)) {
+      const agg = await prisma.exerciseLog.aggregate({
+        where: { workoutLogId },
+        _max: { order: true },
+      });
+      nextOrder = (agg._max.order ?? -1) + 1;
+    }
+
     const exercise = await prisma.exerciseLog.create({
       data: {
-        workoutLogId: parseInt(String(req.params.workoutId)),
+        workoutLogId,
         exerciseId: String(exerciseId),
         exerciseName,
         muscleGroup: muscleGroup || null,
@@ -110,13 +121,64 @@ workoutRouter.post('/:workoutId/exercise', async (req: Request, res: Response) =
         notes: notes || null,
         restSeconds: typeof restSeconds === 'number' ? restSeconds : 120,
         repMode: REP_MODES.has(repMode) ? repMode : 'reps',
-        order: order || 0,
+        order: nextOrder,
       },
       include: { sets: true },
     });
     return res.json(exercise);
   } catch {
     return res.status(500).json({ error: 'Error al agregar ejercicio' });
+  }
+});
+
+workoutRouter.put('/:workoutId/exercises/reorder', async (req: Request, res: Response) => {
+  try {
+    const workoutLogId = parseInt(String(req.params.workoutId), 10);
+    if (!Number.isFinite(workoutLogId)) return res.status(400).json({ error: 'workoutId inválido' });
+
+    const orderedIds = Array.isArray(req.body?.orderedIds) ? req.body.orderedIds : null;
+    if (!orderedIds || orderedIds.length === 0) {
+      return res.status(400).json({ error: 'orderedIds requerido' });
+    }
+
+    const ids = orderedIds.map((id: unknown) => parseInt(String(id), 10));
+    if (ids.some((id: number) => !Number.isFinite(id))) {
+      return res.status(400).json({ error: 'orderedIds inválidos' });
+    }
+    if (new Set(ids).size !== ids.length) {
+      return res.status(400).json({ error: 'orderedIds con duplicados' });
+    }
+
+    const existing = await prisma.exerciseLog.findMany({
+      where: { workoutLogId },
+      select: { id: true },
+    });
+    const existingIds = new Set(existing.map((e) => e.id));
+    if (existingIds.size !== ids.length || ids.some((id: number) => !existingIds.has(id))) {
+      return res.status(400).json({ error: 'orderedIds no coinciden con el entrenamiento' });
+    }
+
+    await prisma.$transaction(
+      ids.map((id: number, index: number) =>
+        prisma.exerciseLog.update({
+          where: { id },
+          data: { order: index },
+        })
+      )
+    );
+
+    const workout = await prisma.workoutLog.findUnique({
+      where: { id: workoutLogId },
+      include: {
+        exerciseLogs: {
+          include: { sets: { orderBy: { setNumber: 'asc' } } },
+          orderBy: { order: 'asc' },
+        },
+      },
+    });
+    return res.json(workout);
+  } catch {
+    return res.status(500).json({ error: 'Error al reordenar ejercicios' });
   }
 });
 

@@ -28,6 +28,8 @@ export const workoutApi = {
   create: (date: string, data: any) => api.post(`/workouts/day/${date}`, data),
   delete: (id: number) => api.delete(`/workouts/${id}`),
   addExercise: (workoutId: number, data: any) => api.post(`/workouts/${workoutId}/exercise`, data),
+  reorderExercises: (workoutId: number, data: { orderedIds: number[] }) =>
+    api.put(`/workouts/${workoutId}/exercises/reorder`, data),
   updateExercise: (id: number, data: any) => api.put(`/workouts/exercise/${id}`, data),
   deleteExercise: (id: number) => api.delete(`/workouts/exercise/${id}`),
   addSet: (exerciseId: number, data: any) => api.post(`/workouts/exercise/${exerciseId}/set`, data),

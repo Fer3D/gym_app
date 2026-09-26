@@ -98,6 +98,10 @@ export interface ExerciseLog {
   sets: ExerciseSet[];
 }
 
+export interface ExerciseReorder {
+  orderedIds: number[];
+}
+
 export interface WorkoutLog {
   id: number;
   date: string;

@@ -87,12 +87,17 @@ export function WorkoutPage() {
         muscleGroup: (exercise.muscles[0]?.name) || '',
         category: exercise.category,
         imageUrl: exercise.images?.[0] || null,
-        order: 0,
       }),
     onSuccess: () => {
       invalidateWorkoutDay();
       setShowExerciseSearch(false);
     },
+  });
+
+  const reorderExercisesMutation = useMutation({
+    mutationFn: ({ workoutId, orderedIds }: { workoutId: number; orderedIds: number[] }) =>
+      workoutApi.reorderExercises(workoutId, { orderedIds }),
+    onSuccess: () => invalidateWorkoutDay(),
   });
 
   const deleteExerciseMutation = useMutation({
@@ -151,6 +156,7 @@ export function WorkoutPage() {
     (createWorkoutMutation.isError && 'No se pudo crear el entrenamiento.') ||
     (deleteWorkoutMutation.isError && 'No se pudo eliminar el entrenamiento.') ||
     (addExerciseMutation.isError && 'No se pudo añadir el ejercicio.') ||
+    (reorderExercisesMutation.isError && 'No se pudo reordenar ejercicios.') ||
     (deleteExerciseMutation.isError && 'No se pudo eliminar el ejercicio.') ||
     (updateExerciseMutation.isError && 'No se pudo actualizar el ejercicio.') ||
     (addSetMutation.isError && 'No se pudo añadir la serie.') ||
@@ -300,19 +306,35 @@ export function WorkoutPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {activeWorkout.exerciseLogs.map((ex: ExerciseLog) => (
-                    <ExerciseCard
-                      key={ex.id}
-                      exercise={ex}
-                      openSetTypeId={openSetTypeId}
-                      onOpenSetTypeId={setOpenSetTypeId}
-                      onAddSet={(data) => addSetMutation.mutate({ exerciseId: ex.id, data })}
-                      onUpdateSet={(id, data) => updateSetMutation.mutate({ id, data })}
-                      onDeleteSet={(id) => deleteSetMutation.mutate(id)}
-                      onUpdateExercise={(data) => updateExerciseMutation.mutate({ id: ex.id, data })}
-                      onDelete={() => deleteExerciseMutation.mutate(ex.id)}
-                    />
-                  ))}
+                  {activeWorkout.exerciseLogs.map((ex: ExerciseLog, idx: number) => {
+                    const logs = activeWorkout.exerciseLogs;
+                    const move = (dir: -1 | 1) => {
+                      const next = idx + dir;
+                      if (next < 0 || next >= logs.length) return;
+                      const orderedIds = logs.map((e) => e.id);
+                      const tmp = orderedIds[idx];
+                      orderedIds[idx] = orderedIds[next];
+                      orderedIds[next] = tmp;
+                      reorderExercisesMutation.mutate({ workoutId: activeWorkout.id, orderedIds });
+                    };
+                    return (
+                      <ExerciseCard
+                        key={ex.id}
+                        exercise={ex}
+                        canMoveUp={idx > 0}
+                        canMoveDown={idx < logs.length - 1}
+                        onMoveUp={() => move(-1)}
+                        onMoveDown={() => move(1)}
+                        openSetTypeId={openSetTypeId}
+                        onOpenSetTypeId={setOpenSetTypeId}
+                        onAddSet={(data) => addSetMutation.mutate({ exerciseId: ex.id, data })}
+                        onUpdateSet={(id, data) => updateSetMutation.mutate({ id, data })}
+                        onDeleteSet={(id) => deleteSetMutation.mutate(id)}
+                        onUpdateExercise={(data) => updateExerciseMutation.mutate({ id: ex.id, data })}
+                        onDelete={() => deleteExerciseMutation.mutate(ex.id)}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -722,6 +744,10 @@ function RestTimer({ seconds, onDone }: { seconds: number; onDone: () => void })
 
 function ExerciseCard({
   exercise,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
   openSetTypeId,
   onOpenSetTypeId,
   onAddSet,
@@ -731,6 +757,10 @@ function ExerciseCard({
   onDelete,
 }: {
   exercise: ExerciseLog;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
   openSetTypeId: number | null;
   onOpenSetTypeId: (id: number | null) => void;
   onAddSet: (data: Record<string, unknown>) => void;
@@ -826,6 +856,26 @@ function ExerciseCard({
             {exercise.sets?.length || 0} series{totalVolume > 0 && ` · ${Math.round(totalVolume)}kg vol.`}
           </p>
         </button>
+        <div className="flex flex-col gap-0.5">
+          <button
+            type="button"
+            onClick={onMoveUp}
+            disabled={!canMoveUp}
+            aria-label="Subir ejercicio"
+            className="p-0.5 text-slate-500 transition-colors hover:text-white disabled:opacity-20 disabled:hover:text-slate-500"
+          >
+            <ChevronUp size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={onMoveDown}
+            disabled={!canMoveDown}
+            aria-label="Bajar ejercicio"
+            className="p-0.5 text-slate-500 transition-colors hover:text-white disabled:opacity-20 disabled:hover:text-slate-500"
+          >
+            <ChevronDown size={14} />
+          </button>
+        </div>
         <button type="button" onClick={onDelete} className="p-1 text-slate-600 transition-colors hover:text-red-400">
           <Trash2 size={14} />
         </button>

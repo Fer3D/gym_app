@@ -113,4 +113,4 @@ export function exerciseCategoryIcon(category?: string | null) {
   return EXERCISE_CATEGORY_ICONS[category || ''] || '🏋️';
 }
 
-export type { Macros, MacrosPer100g, FoodProduct, MealLog, WorkoutLog, ExerciseLog, ExerciseSet, Exercise, Routine, RoutineDay, RoutineExercise } from '../types';
+export type { Macros, MacrosPer100g, FoodProduct, MealLog, WorkoutLog, ExerciseLog, ExerciseSet, Exercise, ExerciseReorder, Routine, RoutineDay, RoutineExercise } from '../types';
