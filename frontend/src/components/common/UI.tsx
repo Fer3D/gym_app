@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
@@ -39,13 +39,11 @@ export function MacroRing({
   return (
     <div className="flex flex-col items-center gap-4">
       <div style={{ width: size, height: size }} className="relative">
-        <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-
+        <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }} aria-hidden>
           <circle
             cx={size / 2} cy={size / 2} r={r}
             fill="none" stroke="rgba(99,102,241,0.1)" strokeWidth="10"
           />
-
           {arc > 0.5 && (
             <motion.circle
               cx={size / 2} cy={size / 2} r={r}
@@ -68,7 +66,7 @@ export function MacroRing({
             {Math.round(calories)}
           </motion.span>
           <span className="text-xs text-slate-400">kcal</span>
-          <span className="text-[10px] text-slate-500">/ {goal}</span>
+          <span className="text-[10px] text-slate-400">/ {goal}</span>
         </div>
       </div>
 
@@ -134,9 +132,9 @@ export function StatsCard({ title, value, subtitle, icon, color = 'indigo', clas
         <div className="flex-1">
           <p className="text-slate-400 text-xs font-medium uppercase tracking-wide">{title}</p>
           <p className="text-2xl font-bold text-white mt-1">{value}</p>
-          {subtitle && <p className="text-slate-500 text-xs mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="text-slate-400 text-xs mt-0.5">{subtitle}</p>}
         </div>
-        <span className="text-2xl ml-2">{icon}</span>
+        <span className="text-2xl ml-2" aria-hidden>{icon}</span>
       </div>
     </motion.div>
   );
@@ -145,6 +143,8 @@ export function StatsCard({ title, value, subtitle, icon, color = 'indigo', clas
 export function Spinner({ size = 24 }: { size?: number }) {
   return (
     <div
+      role="status"
+      aria-label="Cargando"
       style={{ width: size, height: size }}
       className="border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"
     />
@@ -154,7 +154,7 @@ export function Spinner({ size = 24 }: { size?: number }) {
 export function EmptyState({ icon, title, description }: { icon: string; title: string; description?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <span className="text-5xl mb-3">{icon}</span>
+      <span className="text-5xl mb-3" aria-hidden>{icon}</span>
       <h3 className="text-white font-semibold text-lg">{title}</h3>
       {description && <p className="text-slate-400 text-sm mt-1 max-w-sm">{description}</p>}
     </div>
@@ -171,7 +171,7 @@ export function QueryError({
   className?: string;
 }) {
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-3 px-4 py-10 text-center', className)}>
+    <div className={cn('flex flex-col items-center justify-center gap-3 px-4 py-10 text-center', className)} role="alert">
       <p className="text-sm text-red-400">{message}</p>
       {onRetry && (
         <button
@@ -194,9 +194,59 @@ export function MutationError({ message }: { message: string }) {
   );
 }
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export function Modal({ children, onClose, title }: {
   children: ReactNode; onClose: () => void; title: string;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    const panel = panelRef.current;
+    const getFocusable = () =>
+      panel ? Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => !el.hasAttribute('disabled')) : [];
+
+    const focusables = getFocusable();
+    (focusables[0] || panel)?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab' || !panel) return;
+      const items = getFocusable();
+      if (items.length === 0) {
+        e.preventDefault();
+        panel.focus();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = prevOverflow;
+      previous?.focus?.();
+    };
+  }, [onClose]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -206,14 +256,26 @@ export function Modal({ children, onClose, title }: {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="w-full max-w-lg glass rounded-2xl border border-indigo-500/20 overflow-hidden max-h-[90vh] flex flex-col"
+        className="w-full max-w-lg glass rounded-2xl border border-indigo-500/20 overflow-hidden max-h-[90vh] flex flex-col outline-none"
       >
         <div className="flex items-center justify-between p-4 border-b border-white/5">
-          <h2 className="text-white font-semibold">{title}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors text-xl leading-none px-2">&times;</button>
+          <h2 id={titleId} className="text-white font-semibold">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="text-slate-400 hover:text-white transition-colors text-xl leading-none px-2"
+          >
+            &times;
+          </button>
         </div>
         <div className="overflow-y-auto flex-1">{children}</div>
       </motion.div>

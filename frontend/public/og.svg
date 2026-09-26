@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#0f0f1a"/>
+  <rect x="80" y="80" width="1040" height="470" rx="32" fill="#14171c" stroke="#4f46e5" stroke-opacity="0.35" stroke-width="2"/>
+  <g transform="translate(120 140) scale(1.125)">
+    <rect width="64" height="64" rx="14" fill="#4f46e5"/>
+    <path d="M18 36h8l4-16 4 24 4-12h8" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="220" y="176" dominant-baseline="central" fill="#ffffff" font-family="Arial, sans-serif" font-size="48" font-weight="700">FitTrack ES</text>
+  <text x="220" y="214" fill="#a5b4fc" font-family="Arial, sans-serif" font-size="24">Nutrición · Entrenamientos · España</text>
+  <text x="120" y="340" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="36" font-weight="600">Macros, rutinas y calendario</text>
+  <text x="120" y="390" fill="#94a3b8" font-family="Arial, sans-serif" font-size="26">en una sola app de portfolio</text>
+  <text x="120" y="480" fill="#64748b" font-family="Arial, sans-serif" font-size="20">gym-app-opal-eight.vercel.app</text>
+</svg>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gym-app-opal-eight.vercel.app/sitemap.xml

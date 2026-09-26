@@ -168,29 +168,33 @@ export function ProfilePage() {
             {(form.name || 'U')[0].toUpperCase()}
           </div>
           <div className="flex-1">
-            <label className="text-slate-400 text-xs mb-1 block">Nombre</label>
+            <label htmlFor="profile-name" className="text-slate-400 text-xs mb-1 block">Nombre</label>
             <input
+              id="profile-name"
               type="text"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
               placeholder="Tu nombre"
+              autoComplete="name"
             />
           </div>
         </div>
 
         <div>
-          <label className="text-slate-400 text-xs mb-2 block">Sexo biológico (para calcular TDEE)</label>
-          <div className="flex gap-2">
+          <p id="profile-gender-label" className="text-slate-400 text-xs mb-2 block">Sexo biológico (para calcular TDEE)</p>
+          <div className="flex gap-2" role="group" aria-labelledby="profile-gender-label">
             {GENDERS.map((g) => (
               <button
                 key={g.value}
+                type="button"
+                aria-pressed={form.gender === g.value}
                 onClick={() => setForm((f) => ({ ...f, gender: g.value }))}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-colors ${
                   form.gender === g.value ? 'bg-indigo-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'
                 }`}
               >
-                <span>{g.icon}</span> {g.label}
+                <span aria-hidden>{g.icon}</span> {g.label}
               </button>
             ))}
           </div>
@@ -198,33 +202,37 @@ export function ProfilePage() {
 
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className="text-slate-400 text-xs mb-1 flex items-center gap-1">
-              <Scale size={12} /> Peso (kg)
+            <label htmlFor="profile-weight" className="text-slate-400 text-xs mb-1 flex items-center gap-1">
+              <Scale size={12} aria-hidden /> Peso (kg)
             </label>
             <input
+              id="profile-weight"
               type="number"
               value={form.weight}
               onChange={(e) => setForm((f) => ({ ...f, weight: e.target.value }))}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
               placeholder="70"
               step="0.5"
+              inputMode="decimal"
             />
           </div>
           <div>
-            <label className="text-slate-400 text-xs mb-1 flex items-center gap-1">
-              <Ruler size={12} /> Altura (cm)
+            <label htmlFor="profile-height" className="text-slate-400 text-xs mb-1 flex items-center gap-1">
+              <Ruler size={12} aria-hidden /> Altura (cm)
             </label>
             <input
+              id="profile-height"
               type="number"
               value={form.height}
               onChange={(e) => setForm((f) => ({ ...f, height: e.target.value }))}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
               placeholder="175"
+              inputMode="numeric"
             />
           </div>
           <div>
             <label htmlFor="profile-birthDate" className="text-slate-400 text-xs mb-1 flex items-center gap-1">
-              <Calendar size={12} /> Nacimiento
+              <Calendar size={12} aria-hidden /> Nacimiento
             </label>
             <input
               id="profile-birthDate"
@@ -239,13 +247,15 @@ export function ProfilePage() {
 
       <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-3">
         <div className="flex items-center gap-2 mb-2">
-          <Target size={16} className="text-indigo-400" />
-          <h2 className="text-white font-semibold text-sm">Objetivo</h2>
+          <Target size={16} className="text-indigo-400" aria-hidden />
+          <h2 className="text-white font-semibold text-sm" id="profile-objective-heading">Objetivo</h2>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2" role="group" aria-labelledby="profile-objective-heading">
           {OBJECTIVES.map((obj) => (
             <button
               key={obj.value}
+              type="button"
+              aria-pressed={form.objective === obj.value}
               onClick={() => setForm((f) => ({ ...f, objective: obj.value }))}
               className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
                 form.objective === obj.value
@@ -253,10 +263,10 @@ export function ProfilePage() {
                   : 'bg-white/3 border-white/5 text-slate-400 hover:bg-white/8'
               }`}
             >
-              <span className="text-xl">{obj.icon}</span>
+              <span className="text-xl" aria-hidden>{obj.icon}</span>
               <div>
                 <p className={`text-sm font-medium ${form.objective === obj.value ? 'text-white' : 'text-slate-300'}`}>{obj.label}</p>
-                <p className="text-xs text-slate-500">{obj.desc}</p>
+                <p className="text-xs text-slate-400">{obj.desc}</p>
               </div>
               {form.objective === obj.value && (
                 <span className="ml-auto text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full">Activo</span>
@@ -270,10 +280,11 @@ export function ProfilePage() {
         <div className="glass border border-green-500/10 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Activity size={16} className="text-green-400" />
+              <Activity size={16} className="text-green-400" aria-hidden />
               <h2 className="text-white font-semibold text-sm">Tu metabolismo (Mifflin-St Jeor)</h2>
             </div>
             <button
+              type="button"
               onClick={handleAutoGoals}
               disabled={!form.weight}
               className="text-indigo-400 text-xs hover:text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-lg transition-colors disabled:opacity-40"
@@ -284,21 +295,21 @@ export function ProfilePage() {
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white/3 rounded-xl p-3 text-center">
               <p className="text-white font-bold text-xl">{tdee.bmr}</p>
-              <p className="text-slate-500 text-xs">BMR (reposo)</p>
+              <p className="text-slate-400 text-xs">BMR (reposo)</p>
             </div>
             <div className="bg-white/3 rounded-xl p-3 text-center">
               <p className="text-white font-bold text-xl">{tdee.tdee}</p>
-              <p className="text-slate-500 text-xs">TDEE (activo)</p>
+              <p className="text-slate-400 text-xs">TDEE (activo)</p>
             </div>
             <div className="bg-green-600/10 rounded-xl p-3 text-center border border-green-500/20">
               <p className="text-green-400 font-bold text-xl">{tdee.goal}</p>
-              <p className="text-slate-500 text-xs">Tu objetivo</p>
+              <p className="text-slate-400 text-xs">Tu objetivo</p>
             </div>
           </div>
         </div>
       ) : (
         <div className="glass border border-white/5 rounded-2xl px-4 py-3">
-          <p className="text-slate-500 text-xs">
+          <p className="text-slate-400 text-xs">
             TDEE necesita peso, altura, fecha de nacimiento y sexo (masculino/femenino).
           </p>
         </div>
@@ -306,28 +317,30 @@ export function ProfilePage() {
 
       <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-2">
-          <Target size={16} className="text-indigo-400" />
+          <Target size={16} className="text-indigo-400" aria-hidden />
           <h2 className="text-white font-semibold text-sm">Objetivos Nutricionales</h2>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           {[
-            { key: 'calorieGoal', label: 'Calorías diarias', placeholder: '2000', suffix: 'kcal' },
-            { key: 'proteinGoal', label: 'Proteínas', placeholder: '150', suffix: 'g' },
-            { key: 'carbsGoal', label: 'Carbohidratos', placeholder: '250', suffix: 'g' },
-            { key: 'fatsGoal', label: 'Grasas', placeholder: '65', suffix: 'g' },
-          ].map(({ key, label, placeholder, suffix }) => (
+            { key: 'calorieGoal', label: 'Calorías diarias', placeholder: '2000', suffix: 'kcal', id: 'profile-calorieGoal' },
+            { key: 'proteinGoal', label: 'Proteínas', placeholder: '150', suffix: 'g', id: 'profile-proteinGoal' },
+            { key: 'carbsGoal', label: 'Carbohidratos', placeholder: '250', suffix: 'g', id: 'profile-carbsGoal' },
+            { key: 'fatsGoal', label: 'Grasas', placeholder: '65', suffix: 'g', id: 'profile-fatsGoal' },
+          ].map(({ key, label, placeholder, suffix, id }) => (
             <div key={key}>
-              <label className="text-slate-400 text-xs mb-1 block">{label}</label>
+              <label htmlFor={id} className="text-slate-400 text-xs mb-1 block">{label}</label>
               <div className="relative">
                 <input
+                  id={id}
                   type="number"
                   value={form[key as keyof typeof form]}
                   onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500 pr-10"
                   placeholder={placeholder}
+                  inputMode="decimal"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">{suffix}</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" aria-hidden>{suffix}</span>
               </div>
             </div>
           ))}

@@ -62,7 +62,7 @@ export function Sidebar() {
         </nav>
 
         <div className="border-t border-indigo-500/10 px-4 py-4">
-          <p className="text-center text-[10px] text-slate-600">FitTrack ES v1.0</p>
+          <p className="text-center text-[10px] text-slate-400">FitTrack ES v1.0</p>
         </div>
       </aside>
 

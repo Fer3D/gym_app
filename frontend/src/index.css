@@ -63,6 +63,25 @@
     outline-offset: 2px;
   }
 
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+  }
+
+  .skip-link:focus,
+  .skip-link:focus-visible {
+    left: 1rem;
+    top: 1rem;
+    border-radius: 0.75rem;
+    background: #4f46e5;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #fff;
+  }
+
   input[type="number"] {
     -moz-appearance: textfield;
     appearance: textfield;

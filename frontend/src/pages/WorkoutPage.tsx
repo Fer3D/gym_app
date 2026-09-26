@@ -196,10 +196,13 @@ export function WorkoutPage() {
         )}
       </div>
 
-      <div className="flex gap-1 p-1 glass border border-white/5 rounded-2xl">
+      <div className="flex gap-1 p-1 glass border border-white/5 rounded-2xl" role="tablist" aria-label="Sección de entrenamiento">
         {([['today', '🏋️ Hoy'], ['routines', '📋 Rutinas']] as [MainTab, string][]).map(([tab, label]) => (
           <button
             key={tab}
+            type="button"
+            role="tab"
+            aria-selected={mainTab === tab}
             onClick={() => setMainTab(tab)}
             className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
               mainTab === tab ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/30' : 'text-slate-400 hover:text-white'
@@ -214,16 +217,18 @@ export function WorkoutPage() {
         <div className="space-y-4">
 
           <div className="flex items-center gap-3 glass border border-indigo-500/10 rounded-2xl px-4 py-3">
-            <button onClick={() => goToDay(-1)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white">
+            <button type="button" onClick={() => goToDay(-1)} aria-label="Día anterior" className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white">
               <ChevronLeft size={18} />
             </button>
             <div className="flex-1 text-center">
               <p className="text-white font-semibold text-sm capitalize">{formatDateLabel(selectedDate)}</p>
-              <p className="text-slate-500 text-xs">{format(parseISO(selectedDate), 'dd/MM/yyyy')}</p>
+              <p className="text-slate-400 text-xs">{format(parseISO(selectedDate), 'dd/MM/yyyy')}</p>
             </div>
             <button
+              type="button"
               onClick={() => goToDay(1)}
               disabled={selectedDate >= todayString()}
+              aria-label="Día siguiente"
               className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white disabled:opacity-30"
             >
               <ChevronRight size={18} />
@@ -286,7 +291,9 @@ export function WorkoutPage() {
                     <Plus size={14} /> Ejercicio
                   </button>
                   <button
+                    type="button"
                     onClick={() => deleteWorkoutMutation.mutate(activeWorkout.id)}
+                    aria-label="Eliminar entrenamiento"
                     className="p-1.5 rounded-lg bg-red-900/20 hover:bg-red-900/40 text-red-400 transition-colors"
                   >
                     <Trash2 size={14} />
@@ -876,7 +883,12 @@ function ExerciseCard({
             <ChevronDown size={14} />
           </button>
         </div>
-        <button type="button" onClick={onDelete} className="p-1 text-slate-600 transition-colors hover:text-red-400">
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label={`Eliminar ${exercise.exerciseName}`}
+          className="p-1 text-slate-400 transition-colors hover:text-red-400"
+        >
           <Trash2 size={14} />
         </button>
       </div>
@@ -1061,6 +1073,9 @@ function SetRow({
           type="button"
           data-set-type-trigger
           onClick={onToggleType}
+          aria-label={`Tipo de serie: ${SET_TYPE_OPTIONS.find((o) => o.value === currentType)?.label || 'Normal'}`}
+          aria-haspopup="menu"
+          aria-expanded={typeOpen}
           className={`flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 text-xs font-bold ${typeColor}`}
         >
           {badge}
@@ -1095,6 +1110,7 @@ function SetRow({
           onBlur={handleBlur}
           placeholder="0"
           step="0.5"
+          aria-label="Peso en kg"
           className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-center text-xs text-white focus:border-indigo-500 focus:outline-none"
         />
       </div>
@@ -1106,15 +1122,17 @@ function SetRow({
             onChange={(e) => setRepsMin(e.target.value)}
             onBlur={handleBlur}
             placeholder="8"
+            aria-label="Repeticiones mínimas"
             className="w-full rounded-lg border border-white/10 bg-white/5 px-1 py-1.5 text-center text-xs text-white focus:border-indigo-500 focus:outline-none"
           />
-          <span className="text-slate-600">-</span>
+          <span className="text-slate-400" aria-hidden>-</span>
           <input
             type="number"
             value={repsMax}
             onChange={(e) => setRepsMax(e.target.value)}
             onBlur={handleBlur}
             placeholder="10"
+            aria-label="Repeticiones máximas"
             className="w-full rounded-lg border border-white/10 bg-white/5 px-1 py-1.5 text-center text-xs text-white focus:border-indigo-500 focus:outline-none"
           />
         </div>
@@ -1126,6 +1144,7 @@ function SetRow({
             onChange={(e) => setReps(e.target.value)}
             onBlur={handleBlur}
             placeholder="0"
+            aria-label="Repeticiones"
             className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-center text-xs text-white focus:border-indigo-500 focus:outline-none"
           />
         </div>
@@ -1133,8 +1152,10 @@ function SetRow({
       <button
         type="button"
         onClick={toggleCompleted}
+        aria-label={completed ? 'Marcar serie incompleta' : 'Marcar serie completada'}
+        aria-pressed={completed}
         className={`col-span-2 flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
-          completed ? 'bg-green-600 text-white' : 'bg-white/5 text-slate-500 hover:bg-green-900/30 hover:text-green-400'
+          completed ? 'bg-green-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-green-900/30 hover:text-green-400'
         }`}
       >
         <Check size={13} />
@@ -1142,7 +1163,8 @@ function SetRow({
       <button
         type="button"
         onClick={onDelete}
-        className="col-span-1 flex items-center justify-center text-slate-600 transition-colors hover:text-red-400"
+        aria-label="Eliminar serie"
+        className="col-span-1 flex items-center justify-center text-slate-400 transition-colors hover:text-red-400"
       >
         <X size={12} />
       </button>
