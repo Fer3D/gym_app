@@ -28,7 +28,7 @@ describe('mockWorkouts', () => {
 describe('mockCalendarSummary', () => {
   it('respeta year/month y objetivo', () => {
     const summary = mockCalendarSummary(2026, 9);
-    expect(summary.calorieGoal).toBe(2500);
+    expect(summary.calorieGoal).toBe(2000);
     const keys = Object.keys(summary.days);
     expect(keys.length).toBeGreaterThan(0);
     for (const key of keys) {

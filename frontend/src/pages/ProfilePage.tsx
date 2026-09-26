@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Save, User, Target, Scale, Ruler, Calendar, Activity } from 'lucide-react';
 import { userApi } from '../lib/api';
-import { Spinner } from '../components/common/UI';
+import { Spinner, QueryError, MutationError } from '../components/common/UI';
 
 const OBJECTIVES = [
   { value: 'perder_peso', label: 'Perder peso', icon: '📉', desc: 'Déficit calórico de ~500 kcal' },
@@ -20,7 +20,12 @@ const GENDERS = [
 export function ProfilePage() {
   const qc = useQueryClient();
 
-  const { data: profile, isLoading } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ['user-profile'],
     queryFn: () => userApi.getProfile().then((r) => r.data),
   });
@@ -64,51 +69,75 @@ export function ProfilePage() {
   }, [profile]);
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => userApi.updateProfile(data),
+    mutationFn: (data: Record<string, unknown>) => userApi.updateProfile(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['user-profile'] });
       qc.invalidateQueries({ queryKey: ['tdee'] });
-      qc.invalidateQueries({ queryKey: ['calendar'] });
+      qc.invalidateQueries({ queryKey: ['calendar-summary'] });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     },
   });
 
   const handleSave = () => {
+    const calorieGoal = parseInt(form.calorieGoal, 10);
+    const proteinGoal = parseFloat(form.proteinGoal);
+    const carbsGoal = parseFloat(form.carbsGoal);
+    const fatsGoal = parseFloat(form.fatsGoal);
+    if (
+      !Number.isFinite(calorieGoal) ||
+      !Number.isFinite(proteinGoal) ||
+      !Number.isFinite(carbsGoal) ||
+      !Number.isFinite(fatsGoal)
+    ) {
+      return;
+    }
     updateMutation.mutate({
       ...form,
-      weight: form.weight ? parseFloat(form.weight as string) : null,
-      height: form.height ? parseFloat(form.height as string) : null,
+      weight: form.weight ? parseFloat(form.weight) : null,
+      height: form.height ? parseFloat(form.height) : null,
       birthDate: form.birthDate ? new Date(form.birthDate).toISOString() : null,
-      calorieGoal: parseInt(form.calorieGoal as string) || 2000,
-      proteinGoal: parseFloat(form.proteinGoal as string) || 150,
-      carbsGoal: parseFloat(form.carbsGoal as string) || 250,
-      fatsGoal: parseFloat(form.fatsGoal as string) || 65,
+      calorieGoal,
+      proteinGoal,
+      carbsGoal,
+      fatsGoal,
     });
   };
 
   const handleAutoGoals = () => {
-    if (tdee && tdee.goal > 0) {
-      const protein = Math.round((form.weight ? parseFloat(form.weight as string) : 70) * 2);
-      const cals = tdee.goal;
-      const proteinCals = protein * 4;
-      const fatCals = cals * 0.25;
-      const carbCals = cals - proteinCals - fatCals;
-      setForm((f) => ({
-        ...f,
-        calorieGoal: String(cals),
-        proteinGoal: String(protein),
-        carbsGoal: String(Math.round(carbCals / 4)),
-        fatsGoal: String(Math.round(fatCals / 9)),
-      }));
-    }
+    if (!tdee || tdee.goal <= 0 || !form.weight) return;
+    const protein = Math.round(parseFloat(form.weight) * 2);
+    const cals = tdee.goal;
+    const proteinCals = protein * 4;
+    const fatCals = cals * 0.25;
+    const carbCals = cals - proteinCals - fatCals;
+    setForm((f) => ({
+      ...f,
+      calorieGoal: String(cals),
+      proteinGoal: String(protein),
+      carbsGoal: String(Math.round(carbCals / 4)),
+      fatsGoal: String(Math.round(fatCals / 9)),
+    }));
   };
 
-  if (isLoading) return <div className="flex justify-center py-20"><Spinner size={36} /></div>;
+  if (isLoading && !profile) {
+    return <div className="flex justify-center py-20"><Spinner size={36} /></div>;
+  }
+
+  if (isError && !profile) {
+    return (
+      <div className="glass max-w-2xl rounded-2xl border border-red-500/20">
+        <QueryError
+          message="No se pudo cargar el perfil."
+          onRetry={() => void refetch()}
+        />
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 max-w-2xl">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-white">Perfil</h1>
         <motion.button
           onClick={handleSave}
@@ -123,6 +152,10 @@ export function ProfilePage() {
           {saved ? '¡Guardado!' : 'Guardar'}
         </motion.button>
       </div>
+
+      {updateMutation.isError && (
+        <MutationError message="No se pudo guardar el perfil. Revisa los datos e inténtalo de nuevo." />
+      )}
 
       <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-2">
@@ -233,14 +266,18 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {tdee && tdee.tdee > 0 && (
+      {tdee && tdee.tdee > 0 ? (
         <div className="glass border border-green-500/10 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Activity size={16} className="text-green-400" />
               <h2 className="text-white font-semibold text-sm">Tu metabolismo (Mifflin-St Jeor)</h2>
             </div>
-            <button onClick={handleAutoGoals} className="text-indigo-400 text-xs hover:text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-lg transition-colors">
+            <button
+              onClick={handleAutoGoals}
+              disabled={!form.weight}
+              className="text-indigo-400 text-xs hover:text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-lg transition-colors disabled:opacity-40"
+            >
               Autocompletar
             </button>
           </div>
@@ -259,6 +296,12 @@ export function ProfilePage() {
             </div>
           </div>
         </div>
+      ) : (
+        <div className="glass border border-white/5 rounded-2xl px-4 py-3">
+          <p className="text-slate-500 text-xs">
+            TDEE necesita peso, altura, fecha de nacimiento y sexo (masculino/femenino).
+          </p>
+        </div>
       )}
 
       <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-4">
@@ -269,10 +312,10 @@ export function ProfilePage() {
 
         <div className="grid grid-cols-2 gap-3">
           {[
-            { key: 'calorieGoal', label: 'Calorías diarias', placeholder: '2000', suffix: 'kcal', color: 'indigo' },
-            { key: 'proteinGoal', label: 'Proteínas', placeholder: '150', suffix: 'g', color: 'purple' },
-            { key: 'carbsGoal', label: 'Carbohidratos', placeholder: '250', suffix: 'g', color: 'cyan' },
-            { key: 'fatsGoal', label: 'Grasas', placeholder: '65', suffix: 'g', color: 'amber' },
+            { key: 'calorieGoal', label: 'Calorías diarias', placeholder: '2000', suffix: 'kcal' },
+            { key: 'proteinGoal', label: 'Proteínas', placeholder: '150', suffix: 'g' },
+            { key: 'carbsGoal', label: 'Carbohidratos', placeholder: '250', suffix: 'g' },
+            { key: 'fatsGoal', label: 'Grasas', placeholder: '65', suffix: 'g' },
           ].map(({ key, label, placeholder, suffix }) => (
             <div key={key}>
               <label className="text-slate-400 text-xs mb-1 block">{label}</label>

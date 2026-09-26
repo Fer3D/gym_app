@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { routineApi } from '../../lib/api';
 import type { RoutineDay, RoutineExercise } from '../../lib/utils';
 import { ExerciseSearch } from './ExerciseSearch';
-import { Modal } from '../common/UI';
+import { Modal, MutationError } from '../common/UI';
 import type { Exercise } from '../../lib/utils';
 
 interface RoutineBuilderProps {
@@ -259,6 +259,10 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
         <Save size={16} />
         {saveMutation.isPending ? 'Guardando...' : 'Guardar rutina'}
       </button>
+
+      {saveMutation.isError && (
+        <MutationError message="No se pudo guardar la rutina. Reintenta." />
+      )}
 
       {!canSave && name && (
         <p className="text-slate-500 text-xs text-center">

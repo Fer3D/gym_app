@@ -108,6 +108,22 @@ CREATE TABLE "ExerciseSet" (
     CONSTRAINT "ExerciseSet_exerciseLogId_fkey" FOREIGN KEY ("exerciseLogId") REFERENCES "ExerciseLog" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+-- CreateTable
+CREATE TABLE "Routine" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "userId" INTEGER NOT NULL DEFAULT 1,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "level" TEXT NOT NULL DEFAULT 'intermediate',
+    "daysPerWeek" INTEGER NOT NULL DEFAULT 3,
+    "days" TEXT NOT NULL,
+    "source" TEXT NOT NULL DEFAULT 'user',
+    "sourceId" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Routine_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 

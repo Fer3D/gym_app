@@ -60,7 +60,7 @@ export function CalendarPage() {
 
   const selectedStr = dateToString(selectedDate);
   const dayData = summary?.days?.[selectedStr] as CalendarDaySummary | undefined;
-  const calorieGoal = summary?.calorieGoal || 2500;
+  const calorieGoal = summary?.calorieGoal || 2000;
 
   const monthLabel = useMemo(
     () => format(viewDate, 'MMMM yyyy', { locale: es }),
@@ -186,7 +186,7 @@ export function CalendarPage() {
                   <p className="text-sm text-[#e25c5c]">No se pudo cargar el calendario.</p>
                   <button
                     type="button"
-                    onClick={() => refetch()}
+                    onClick={() => void refetch()}
                     className="mt-4 h-10 rounded-md border border-[#2a2f3a] bg-[#1b1f27] px-4 text-sm text-[#eef0f3]"
                   >
                     Reintentar

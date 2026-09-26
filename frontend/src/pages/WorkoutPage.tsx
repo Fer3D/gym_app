@@ -12,7 +12,7 @@ import { todayString, dateToString, formatDateLabel } from '../lib/utils';
 import { ExerciseSearch } from '../components/workout/ExerciseSearch';
 import { RoutineBuilder } from '../components/workout/RoutineBuilder';
 import { ExploreRoutines } from '../components/workout/ExploreRoutines';
-import { Modal, Spinner, EmptyState } from '../components/common/UI';
+import { Modal, Spinner, EmptyState, QueryError, MutationError } from '../components/common/UI';
 import { format, addDays, parseISO } from 'date-fns';
 
 type MainTab = 'today' | 'routines';
@@ -28,15 +28,25 @@ export function WorkoutPage() {
 
   const [startingRoutine, setStartingRoutine] = useState<Routine | null>(null);
 
-  const { data: workouts = [], isLoading } = useQuery({
+  const {
+    data: workouts = [],
+    isLoading,
+    isError: workoutsError,
+    refetch: refetchWorkouts,
+  } = useQuery({
     queryKey: ['workout-day', selectedDate],
     queryFn: () => workoutApi.getDay(selectedDate).then((r) => r.data),
   });
 
+  const invalidateWorkoutDay = () => {
+    void qc.invalidateQueries({ queryKey: ['workout-day', selectedDate] });
+    void qc.invalidateQueries({ queryKey: ['calendar-summary'] });
+  };
+
   const createWorkoutMutation = useMutation({
     mutationFn: (name: string) => workoutApi.create(selectedDate, { name }),
     onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ['workout-day', selectedDate] });
+      invalidateWorkoutDay();
       setActiveWorkoutId(res.data.id);
       setMainTab('today');
     },
@@ -44,7 +54,7 @@ export function WorkoutPage() {
 
   const deleteWorkoutMutation = useMutation({
     mutationFn: (id: number) => workoutApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['workout-day', selectedDate] }),
+    onSuccess: () => invalidateWorkoutDay(),
   });
 
   const addExerciseMutation = useMutation({
@@ -57,32 +67,37 @@ export function WorkoutPage() {
         order: 0,
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['workout-day', selectedDate] });
+      invalidateWorkoutDay();
       setShowExerciseSearch(false);
     },
   });
 
   const deleteExerciseMutation = useMutation({
     mutationFn: (id: number) => workoutApi.deleteExercise(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['workout-day', selectedDate] }),
+    onSuccess: () => invalidateWorkoutDay(),
   });
 
   const addSetMutation = useMutation({
     mutationFn: ({ exerciseId, data }: { exerciseId: number; data: any }) => workoutApi.addSet(exerciseId, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['workout-day', selectedDate] }),
+    onSuccess: () => invalidateWorkoutDay(),
   });
 
   const updateSetMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) => workoutApi.updateSet(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['workout-day', selectedDate] }),
+    onSuccess: () => invalidateWorkoutDay(),
   });
 
   const deleteSetMutation = useMutation({
     mutationFn: (id: number) => workoutApi.deleteSet(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['workout-day', selectedDate] }),
+    onSuccess: () => invalidateWorkoutDay(),
   });
 
-  const { data: savedRoutines = [] } = useQuery<Routine[]>({
+  const {
+    data: savedRoutines = [],
+    isError: routinesError,
+    isLoading: routinesLoading,
+    refetch: refetchRoutines,
+  } = useQuery<Routine[]>({
     queryKey: ['routines'],
     queryFn: () => routineApi.getAll().then((r) => r.data),
   });
@@ -96,12 +111,24 @@ export function WorkoutPage() {
     mutationFn: ({ id, dayIndex }: { id: number; dayIndex: number }) =>
       routineApi.startFromSaved(id, selectedDate, dayIndex),
     onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ['workout-day', selectedDate] });
+      invalidateWorkoutDay();
       setActiveWorkoutId(res.data.id);
       setStartingRoutine(null);
       setMainTab('today');
     },
   });
+
+  const mutationError =
+    (createWorkoutMutation.isError && 'No se pudo crear el entrenamiento.') ||
+    (deleteWorkoutMutation.isError && 'No se pudo eliminar el entrenamiento.') ||
+    (addExerciseMutation.isError && 'No se pudo añadir el ejercicio.') ||
+    (deleteExerciseMutation.isError && 'No se pudo eliminar el ejercicio.') ||
+    (addSetMutation.isError && 'No se pudo añadir la serie.') ||
+    (updateSetMutation.isError && 'No se pudo actualizar la serie.') ||
+    (deleteSetMutation.isError && 'No se pudo eliminar la serie.') ||
+    (deleteRoutineMutation.isError && 'No se pudo eliminar la rutina.') ||
+    (startFromSavedMutation.isError && 'No se pudo iniciar la rutina.') ||
+    null;
 
   const goToDay = (delta: number) => {
     const d = parseISO(selectedDate);
@@ -112,7 +139,7 @@ export function WorkoutPage() {
     || (workouts as WorkoutLog[])[0];
 
   const handleWorkoutStarted = (workoutId: number) => {
-    qc.invalidateQueries({ queryKey: ['workout-day', selectedDate] });
+    invalidateWorkoutDay();
     setActiveWorkoutId(workoutId);
     setMainTab('today');
   };
@@ -167,6 +194,8 @@ export function WorkoutPage() {
             </button>
           </div>
 
+          {mutationError && <MutationError message={mutationError} />}
+
           {(workouts as WorkoutLog[]).length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-1">
               {(workouts as WorkoutLog[]).map((w) => (
@@ -185,8 +214,14 @@ export function WorkoutPage() {
 
           {isLoading ? (
             <div className="flex justify-center py-12"><Spinner size={36} /></div>
+          ) : workoutsError ? (
+            <div className="glass border border-red-500/20 rounded-2xl">
+              <QueryError
+                message="No se pudo cargar los entrenamientos de este día."
+                onRetry={() => void refetchWorkouts()}
+              />
+            </div>
           ) : !activeWorkout ? (
-
             <WorkoutHub
               date={selectedDate}
               onEmpty={() => createWorkoutMutation.mutate('Entrenamiento libre')}
@@ -264,8 +299,16 @@ export function WorkoutPage() {
               onWorkoutStarted={handleWorkoutStarted}
               onClose={() => setRoutinesSubView('list')}
             />
+          ) : routinesLoading ? (
+            <div className="flex justify-center py-12"><Spinner size={36} /></div>
+          ) : routinesError ? (
+            <div className="glass border border-red-500/20 rounded-2xl">
+              <QueryError
+                message="No se pudo cargar tus rutinas."
+                onRetry={() => void refetchRoutines()}
+              />
+            </div>
           ) : (
-
             <SavedRoutinesList
               routines={savedRoutines as Routine[]}
               onCreate={() => setRoutinesSubView('create')}

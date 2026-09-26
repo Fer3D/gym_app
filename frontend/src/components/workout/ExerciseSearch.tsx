@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ChevronRight } from 'lucide-react';
 import { exerciseApi } from '../../lib/api';
 import type { Exercise } from '../../lib/utils';
-import { Spinner } from '../common/UI';
+import { Spinner, QueryError } from '../common/UI';
 
 interface ExerciseSearchProps {
   onSelect: (exercise: Exercise) => void;
@@ -46,7 +46,7 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
     staleTime: 24 * 60 * 60 * 1000,
   });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['exercise-list', page, selectedCategory, debouncedQ],
     queryFn: async () => {
       if (debouncedQ.length > 1) {
@@ -59,6 +59,7 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
   });
 
   const exercises: Exercise[] = data?.exercises || [];
+  const listFailed = isError && !data;
 
   return (
     <div className="flex flex-col h-full">
@@ -104,59 +105,75 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
-        {isLoading && <div className="flex justify-center py-8"><Spinner /></div>}
-        <AnimatePresence>
-          {exercises.map((ex, i) => (
-            <motion.button
-              key={ex.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.02 }}
-              onClick={() => onSelect(ex)}
-              className="w-full flex items-center gap-3 p-3 bg-white/3 hover:bg-white/8 rounded-xl border border-white/5 hover:border-indigo-500/30 transition-all text-left"
-            >
+        {listFailed ? (
+          <QueryError
+            message="No se pudo cargar ejercicios."
+            onRetry={() => void refetch()}
+            className="py-8"
+          />
+        ) : isLoading ? (
+          <div className="flex justify-center py-8"><Spinner /></div>
+        ) : (
+          <>
+            <AnimatePresence>
+              {exercises.map((ex, i) => (
+                <motion.button
+                  key={ex.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.02 }}
+                  onClick={() => onSelect(ex)}
+                  className="w-full flex items-center gap-3 p-3 bg-white/3 hover:bg-white/8 rounded-xl border border-white/5 hover:border-indigo-500/30 transition-all text-left"
+                >
+                  <div className="w-10 h-10 bg-indigo-900/30 rounded-lg flex items-center justify-center flex-shrink-0 text-lg">
+                    {CATEGORY_ICONS[ex.category] || '🏋️'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-medium leading-tight">{ex.name}</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {ex.category && (
+                        <span className="text-[10px] bg-indigo-900/40 text-indigo-400 px-1.5 py-0.5 rounded-full">
+                          {CATEGORY_ES[ex.category] || ex.category}
+                        </span>
+                      )}
+                      {(ex.muscles || []).slice(0, 2).map((m) => (
+                        <span key={m.id} className="text-[10px] bg-white/5 text-slate-400 px-1.5 py-0.5 rounded-full">
+                          {m.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-600 flex-shrink-0" />
+                </motion.button>
+              ))}
+            </AnimatePresence>
 
-              <div className="w-10 h-10 bg-indigo-900/30 rounded-lg flex items-center justify-center flex-shrink-0 text-lg">
-                {CATEGORY_ICONS[ex.category] || '🏋️'}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-medium leading-tight">{ex.name}</p>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {ex.category && (
-                    <span className="text-[10px] bg-indigo-900/40 text-indigo-400 px-1.5 py-0.5 rounded-full">
-                      {CATEGORY_ES[ex.category] || ex.category}
-                    </span>
-                  )}
-                  {(ex.muscles || []).slice(0, 2).map((m) => (
-                    <span key={m.id} className="text-[10px] bg-white/5 text-slate-400 px-1.5 py-0.5 rounded-full">
-                      {m.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <ChevronRight size={16} className="text-slate-600 flex-shrink-0" />
-            </motion.button>
-          ))}
-        </AnimatePresence>
+            {exercises.length === 0 && (
+              <p className="text-center text-slate-500 text-sm py-8">
+                {debouncedQ ? 'Sin resultados' : 'No hay ejercicios'}
+              </p>
+            )}
 
-        {!debouncedQ && data?.pages && data.pages > 1 && (
-          <div className="flex items-center gap-2 pt-2 justify-center">
-            <button
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page === 1}
-              className="px-3 py-1.5 rounded-lg bg-white/5 text-slate-300 text-xs disabled:opacity-30 hover:bg-white/10 transition-colors"
-            >
-              ← Anterior
-            </button>
-            <span className="text-slate-400 text-xs">{page} / {data.pages}</span>
-            <button
-              onClick={() => setPage(Math.min(data.pages, page + 1))}
-              disabled={page === data.pages}
-              className="px-3 py-1.5 rounded-lg bg-white/5 text-slate-300 text-xs disabled:opacity-30 hover:bg-white/10 transition-colors"
-            >
-              Siguiente →
-            </button>
-          </div>
+            {!debouncedQ && data?.pages && data.pages > 1 && (
+              <div className="flex items-center gap-2 pt-2 justify-center">
+                <button
+                  onClick={() => setPage(Math.max(1, page - 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 rounded-lg bg-white/5 text-slate-300 text-xs disabled:opacity-30 hover:bg-white/10 transition-colors"
+                >
+                  ← Anterior
+                </button>
+                <span className="text-slate-400 text-xs">{page} / {data.pages}</span>
+                <button
+                  onClick={() => setPage(Math.min(data.pages, page + 1))}
+                  disabled={page === data.pages}
+                  className="px-3 py-1.5 rounded-lg bg-white/5 text-slate-300 text-xs disabled:opacity-30 hover:bg-white/10 transition-colors"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

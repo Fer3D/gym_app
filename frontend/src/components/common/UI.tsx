@@ -8,19 +8,31 @@ interface MacroRingProps {
   proteins: number;
   carbs: number;
   fats: number;
+  proteinGoal?: number;
+  carbsGoal?: number;
+  fatsGoal?: number;
   size?: number;
 }
 
-export function MacroRing({ calories, goal, proteins, carbs, fats, size = 160 }: MacroRingProps) {
+export function MacroRing({
+  calories,
+  goal,
+  proteins,
+  carbs,
+  fats,
+  proteinGoal = 150,
+  carbsGoal = 250,
+  fatsGoal = 65,
+  size = 160,
+}: MacroRingProps) {
   const pct = Math.min((calories / Math.max(goal, 1)) * 100, 110);
   const r = (size / 2) - 16;
   const circumference = 2 * Math.PI * r;
   const arc = (pct / 100) * circumference;
 
-  const total = proteins * 4 + carbs * 4 + fats * 9;
-  const pPct = total > 0 ? (proteins * 4 / total) * 100 : 33;
-  const cPct = total > 0 ? (carbs * 4 / total) * 100 : 34;
-  const fPct = total > 0 ? (fats * 9 / total) * 100 : 33;
+  const pPct = Math.min((proteins / Math.max(proteinGoal, 1)) * 100, 100);
+  const cPct = Math.min((carbs / Math.max(carbsGoal, 1)) * 100, 100);
+  const fPct = Math.min((fats / Math.max(fatsGoal, 1)) * 100, 100);
 
   const color = pct > 105 ? '#ef4444' : pct > 95 ? '#22c55e' : pct > 70 ? '#f59e0b' : '#6366f1';
 
@@ -34,15 +46,17 @@ export function MacroRing({ calories, goal, proteins, carbs, fats, size = 160 }:
             fill="none" stroke="rgba(99,102,241,0.1)" strokeWidth="10"
           />
 
-          <motion.circle
-            cx={size / 2} cy={size / 2} r={r}
-            fill="none" stroke={color} strokeWidth="10"
-            strokeLinecap="round"
-            strokeDasharray={`${arc} ${circumference}`}
-            initial={{ strokeDasharray: `0 ${circumference}` }}
-            animate={{ strokeDasharray: `${arc} ${circumference}` }}
-            transition={{ duration: 1, ease: 'easeOut' }}
-          />
+          {arc > 0.5 && (
+            <motion.circle
+              cx={size / 2} cy={size / 2} r={r}
+              fill="none" stroke={color} strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={`${arc} ${circumference}`}
+              initial={{ strokeDasharray: `0 ${circumference}` }}
+              animate={{ strokeDasharray: `${arc} ${circumference}` }}
+              transition={{ duration: 1, ease: 'easeOut' }}
+            />
+          )}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <motion.span
@@ -144,6 +158,39 @@ export function EmptyState({ icon, title, description }: { icon: string; title: 
       <h3 className="text-white font-semibold text-lg">{title}</h3>
       {description && <p className="text-slate-400 text-sm mt-1 max-w-sm">{description}</p>}
     </div>
+  );
+}
+
+export function QueryError({
+  message = 'No se pudo cargar los datos.',
+  onRetry,
+  className,
+}: {
+  message?: string;
+  onRetry?: () => void;
+  className?: string;
+}) {
+  return (
+    <div className={cn('flex flex-col items-center justify-center gap-3 px-4 py-10 text-center', className)}>
+      <p className="text-sm text-red-400">{message}</p>
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="h-9 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-slate-200 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          Reintentar
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function MutationError({ message }: { message: string }) {
+  return (
+    <p role="alert" className="text-sm text-red-400">
+      {message}
+    </p>
   );
 }
 

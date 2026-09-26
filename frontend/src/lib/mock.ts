@@ -213,5 +213,5 @@ export const mockCalendarSummary = (year: number, month: number): CalendarSummar
           : [],
     };
   }
-  return { calorieGoal: 2500, days };
+  return { calorieGoal: 2000, days };
 }

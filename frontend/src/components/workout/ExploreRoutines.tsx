@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, ChevronDown, ChevronUp, Play, Bookmark, Check } from 'lucide-react';
 import { routineApi } from '../../lib/api';
 import type { Routine } from '../../lib/utils';
-import { Spinner } from '../common/UI';
+import { Spinner, QueryError, MutationError } from '../common/UI';
 import { todayString } from '../../lib/utils';
 
 interface ExploreRoutinesProps {
@@ -38,7 +38,7 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
   const [startingRoutine, setStartingRoutine] = useState<{ id: string; dayIndex: number } | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
-  const { data: routines = [], isLoading } = useQuery<Routine[]>({
+  const { data: routines = [], isLoading, isError, refetch } = useQuery<Routine[]>({
     queryKey: ['explore-routines'],
     queryFn: () => routineApi.explore().then((r) => r.data),
     staleTime: 24 * 60 * 60 * 1000,
@@ -79,8 +79,27 @@ export function ExploreRoutines({ onWorkoutStarted, onClose }: ExploreRoutinesPr
     );
   }
 
+  if (isError) {
+    return (
+      <QueryError
+        message="No se pudo cargar las rutinas explorables."
+        onRetry={() => void refetch()}
+        className="py-16"
+      />
+    );
+  }
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+      {(saveMutation.isError || startMutation.isError) && (
+        <MutationError
+          message={
+            saveMutation.isError
+              ? 'No se pudo guardar la rutina.'
+              : 'No se pudo iniciar el entrenamiento.'
+          }
+        />
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-white">Explorar rutinas</h2>

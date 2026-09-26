@@ -142,13 +142,14 @@ userRouter.put('/profile', async (req: Request, res: Response) => {
 
 userRouter.get('/tdee', async (_req: Request, res: Response) => {
   const user = await prisma.user.findFirst({ where: { id: 1 } });
-  if (!user || !user.weight || !user.height) {
+  const genderOk = user?.gender === 'masculino' || user?.gender === 'femenino';
+  if (!user || !user.weight || !user.height || !user.birthDate || !genderOk) {
     return res.json({ bmr: 0, tdee: 0, goal: 0 });
   }
 
-  const age = user.birthDate
-    ? Math.floor((Date.now() - new Date(user.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-    : 30;
+  const age = Math.floor(
+    (Date.now() - new Date(user.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)
+  );
 
   let bmr = 10 * user.weight + 6.25 * user.height - 5 * age;
   if (user.gender === 'masculino') bmr += 5;

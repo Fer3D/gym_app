@@ -5,7 +5,7 @@ import { Search, X, Package, RefreshCw, Zap, Clock } from 'lucide-react';
 import { foodApi } from '../../lib/api';
 import type { FoodProduct } from '../../lib/utils';
 import { calcMacrosFromPer100g, getMealLabel } from '../../lib/utils';
-import { Spinner } from '../common/UI';
+import { Spinner, QueryError } from '../common/UI';
 
 interface FoodSearchProps {
   onSelect: (food: FoodProduct, quantity: number) => void;
@@ -46,7 +46,12 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const { data: popular } = useQuery({
+  const {
+    data: popular,
+    isLoading: popularLoading,
+    isError: popularError,
+    refetch: refetchPopular,
+  } = useQuery({
     queryKey: ['food-popular'],
     queryFn: () => foodApi.popular().then((r) => r.data),
     staleTime: 30 * 60 * 1000,
@@ -273,65 +278,80 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
-
-        {searchState === 'loading' && products.length === 0 && (
-          <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-white/5 animate-pulse">
-                <div className="w-10 h-10 bg-white/5 rounded-lg flex-shrink-0" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-3 bg-white/5 rounded w-2/3" />
-                  <div className="h-2.5 bg-white/5 rounded w-1/3" />
-                </div>
-                <div className="w-10 space-y-1">
-                  <div className="h-3 bg-white/5 rounded" />
-                  <div className="h-2 bg-white/5 rounded" />
-                </div>
+        {debouncedQ.length <= 1 && popularError ? (
+          <QueryError
+            message="No se pudo cargar alimentos populares."
+            onRetry={() => void refetchPopular()}
+            className="py-8"
+          />
+        ) : debouncedQ.length <= 1 && popularLoading && displayProducts.length === 0 ? (
+          <div className="flex justify-center py-8"><Spinner /></div>
+        ) : (
+          <>
+            {searchState === 'loading' && products.length === 0 && (
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-white/5 animate-pulse">
+                    <div className="w-10 h-10 bg-white/5 rounded-lg flex-shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3 bg-white/5 rounded w-2/3" />
+                      <div className="h-2.5 bg-white/5 rounded w-1/3" />
+                    </div>
+                    <div className="w-10 space-y-1">
+                      <div className="h-3 bg-white/5 rounded" />
+                      <div className="h-2 bg-white/5 rounded" />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
 
-        {searchState === 'done' && products.length === 0 && debouncedQ.length > 1 && (
-          <div className="text-center py-8">
-            <p className="text-slate-400 text-sm">No se encontraron resultados para "{debouncedQ}"</p>
-            <p className="text-slate-500 text-xs mt-1">Prueba con otro término o recarga</p>
-          </div>
-        )}
-
-        <AnimatePresence>
-          {displayProducts.map((p, i) => (
-            <motion.button
-              key={`${p.id}-${i}`}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.18, delay: Math.min(i * 0.025, 0.3) }}
-              onClick={() => setSelected(p)}
-              className="w-full flex items-center gap-3 p-3 bg-white/3 hover:bg-white/8 rounded-xl border border-white/5 hover:border-indigo-500/30 transition-all text-left"
-            >
-              {p.imageUrl ? (
-                <img src={p.imageUrl} alt={p.name} className="w-10 h-10 object-cover rounded-lg flex-shrink-0" />
-              ) : (
-                <div className="w-10 h-10 bg-indigo-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Package size={16} className="text-indigo-400" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-medium leading-tight truncate">{p.name}</p>
-                {p.brand && <p className="text-slate-500 text-xs truncate">{p.brand}</p>}
+            {searchState === 'done' && products.length === 0 && debouncedQ.length > 1 && (
+              <div className="text-center py-8">
+                <p className="text-slate-400 text-sm">No se encontraron resultados para "{debouncedQ}"</p>
+                <p className="text-slate-500 text-xs mt-1">Prueba con otro término o recarga</p>
               </div>
-              <div className="text-right flex-shrink-0">
-                <p className="text-indigo-400 text-sm font-bold">{p.per100g.calories}</p>
-                <p className="text-slate-500 text-[10px]">kcal/100g</p>
-              </div>
-            </motion.button>
-          ))}
-        </AnimatePresence>
+            )}
 
-        {searchState === 'streaming' && products.length > 0 && (
-          <div className="flex justify-center py-3">
-            <Spinner size={18} />
-          </div>
+            <AnimatePresence>
+              {displayProducts.map((p, i) => (
+                <motion.button
+                  key={`${p.id}-${i}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.18, delay: Math.min(i * 0.025, 0.3) }}
+                  onClick={() => setSelected(p)}
+                  className="w-full flex items-center gap-3 p-3 bg-white/3 hover:bg-white/8 rounded-xl border border-white/5 hover:border-indigo-500/30 transition-all text-left"
+                >
+                  {p.imageUrl ? (
+                    <img src={p.imageUrl} alt={p.name} className="w-10 h-10 object-cover rounded-lg flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 bg-indigo-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Package size={16} className="text-indigo-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-medium leading-tight truncate">{p.name}</p>
+                    {p.brand && <p className="text-slate-500 text-xs truncate">{p.brand}</p>}
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-indigo-400 text-sm font-bold">{p.per100g.calories}</p>
+                    <p className="text-slate-500 text-[10px]">kcal/100g</p>
+                  </div>
+                </motion.button>
+              ))}
+            </AnimatePresence>
+
+            {debouncedQ.length <= 1 && !popularLoading && displayProducts.length === 0 && (
+              <p className="text-center text-slate-500 text-sm py-8">No hay alimentos populares ahora</p>
+            )}
+
+            {searchState === 'streaming' && products.length > 0 && (
+              <div className="flex justify-center py-3">
+                <Spinner size={18} />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
