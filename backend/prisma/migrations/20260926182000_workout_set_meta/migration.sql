@@ -1,0 +1,6 @@
+ALTER TABLE "ExerciseLog" ADD COLUMN "restSeconds" INTEGER DEFAULT 120;
+ALTER TABLE "ExerciseLog" ADD COLUMN "repMode" TEXT NOT NULL DEFAULT 'reps';
+
+ALTER TABLE "ExerciseSet" ADD COLUMN "setType" TEXT NOT NULL DEFAULT 'normal';
+ALTER TABLE "ExerciseSet" ADD COLUMN "repsMin" INTEGER;
+ALTER TABLE "ExerciseSet" ADD COLUMN "repsMax" INTEGER;

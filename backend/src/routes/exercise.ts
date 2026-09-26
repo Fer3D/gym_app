@@ -6,9 +6,80 @@ export const exerciseRouter = Router();
 
 const WGER_BASE = 'https://wger.de/api/v2';
 
+function isExercisePhoto(url: string): boolean {
+  return /\/media\/exercise-images\//i.test(url);
+}
+
+function pickImages(data: any): string[] {
+  const rows = Array.isArray(data.images) ? [...data.images] : [];
+  rows.sort((a: any, b: any) => Number(Boolean(b?.is_main)) - Number(Boolean(a?.is_main)));
+
+  return rows
+    .map((img: any) => img.image || img.thumbnails?.medium || img.thumbnails?.small)
+    .filter((u: unknown): u is string => typeof u === 'string' && isExercisePhoto(u));
+}
+
+export async function resolveExerciseImage(exerciseId: string): Promise<string | null> {
+  const id = String(exerciseId).trim();
+  if (!/^\d+$/.test(id)) return null;
+
+  const cacheKey = `img:${id}`;
+  const cached = exerciseCache.get(cacheKey) as unknown as string | null | undefined;
+  if (cached !== undefined) {
+    if (cached === null || isExercisePhoto(cached)) return cached;
+    exerciseCache.delete(cacheKey);
+  }
+
+  try {
+    const infoRes = await axios.get(`${WGER_BASE}/exerciseinfo/${id}/?format=json`, { timeout: 5000 });
+    const url = pickImages(infoRes.data)[0] || null;
+    exerciseCache.set(cacheKey, url as unknown as unknown[]);
+    return url;
+  } catch {
+    exerciseCache.set(cacheKey, null as unknown as unknown[]);
+    return null;
+  }
+}
+
+async function getSearchIndex(): Promise<ReturnType<typeof formatExercise>[]> {
+  const cacheKey = 'search-index';
+  const cached = exerciseCache.get(cacheKey) as unknown as ReturnType<typeof formatExercise>[] | undefined;
+  if (cached) return cached;
+
+  const offsets = [0, 50, 100, 150, 200, 250];
+  const pages = await Promise.all(
+    offsets.map((offset) =>
+      axios.get(`${WGER_BASE}/exerciseinfo/`, {
+        params: { format: 'json', limit: 50, offset },
+        timeout: 12000,
+      })
+    )
+  );
+
+  const exercises = pages
+    .flatMap((p) => (p.data.results || []).map(formatExercise))
+    .filter(Boolean) as ReturnType<typeof formatExercise>[];
+
+  exerciseCache.set(cacheKey, exercises as unknown as unknown[]);
+  return exercises;
+}
+
 exerciseRouter.get('/search', async (req: Request, res: Response) => {
   try {
     const { q, category, muscle, equipment, page = 1 } = req.query;
+
+    if (q && String(q).trim().length > 1) {
+      const term = String(q).trim().toLowerCase();
+      const index = await getSearchIndex();
+      const exercises = index
+        .filter((ex) => {
+          const name = (ex?.name || '').toLowerCase();
+          const cat = (ex?.category || '').toLowerCase();
+          return name.includes(term) || cat.includes(term);
+        })
+        .slice(0, 30);
+      return res.json({ exercises, count: exercises.length });
+    }
 
     const params: any = {
       format: 'json',
@@ -21,26 +92,7 @@ exerciseRouter.get('/search', async (req: Request, res: Response) => {
     if (muscle) params.muscles = muscle;
     if (equipment) params.equipment = equipment;
 
-    let url = `${WGER_BASE}/exercise/`;
-    if (q) {
-      url = `${WGER_BASE}/exercise/search/?term=${encodeURIComponent(q as string)}&language=es&format=json&language=es`;
-      const searchResponse = await axios.get(url, { timeout: 8000 });
-      const suggestions = searchResponse.data?.suggestions || [];
-
-      const exercises = suggestions.slice(0, 30).map((s: any) => ({
-        id: s.data?.id ?? s.id,
-        name: s.value || s.data?.name || `Ejercicio`,
-        description: '',
-        category: s.data?.category || '',
-        muscles: [],
-        musclesSecondary: [],
-        equipment: [],
-        images: [],
-      }));
-      return res.json({ exercises, count: exercises.length });
-    }
-
-    const response = await axios.get(url, { params, timeout: 8000 });
+    const response = await axios.get(`${WGER_BASE}/exercise/`, { params, timeout: 8000 });
 
     const exercisesWithInfo = await Promise.all(
       (response.data.results || []).map(async (ex: any) => {
@@ -118,12 +170,12 @@ function formatExercise(data: any) {
     muscles: (data.muscles || []).map((m: any) => ({ id: m.id, name: muscleNameES(m.name_en || m.name) })),
     musclesSecondary: (data.muscles_secondary || []).map((m: any) => ({ id: m.id, name: muscleNameES(m.name_en || m.name) })),
     equipment: (data.equipment || []).map((e: any) => ({ id: e.id, name: equipmentNameES(e.name) })),
-    images: (data.images || []).map((img: any) => img.image),
+    images: pickImages(data),
   };
 }
 
 function formatExerciseBasic(data: any) {
-  return { id: data.id, name: `Ejercicio ${data.id}`, category: '', muscles: [], equipment: [] };
+  return { id: data.id, name: `Ejercicio ${data.id}`, category: '', muscles: [], equipment: [], images: [] as string[] };
 }
 
 function stripHtml(html: string) {

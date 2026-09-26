@@ -103,7 +103,10 @@ model ExerciseLog {
   exerciseName String
   muscleGroup  String?
   category     String?
+  imageUrl     String?
   notes        String?
+  restSeconds  Int?   @default(120)
+  repMode      String @default("reps")
   order        Int    @default(0)
 
   workoutLog   WorkoutLog  @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
@@ -114,7 +117,10 @@ model ExerciseSet {
   id            Int     @id @default(autoincrement())
   exerciseLogId Int
   setNumber     Int
+  setType       String  @default("normal")
   reps          Int?
+  repsMin       Int?
+  repsMax       Int?
   weight        Float?
   duration      Int?
   distance      Float?

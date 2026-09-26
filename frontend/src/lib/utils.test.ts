@@ -8,6 +8,7 @@ import {
   getWeekStart,
   greetingForHour,
   formatDate,
+  weightAnomalyWarning,
 } from './utils';
 
 describe('calcMacrosFromPer100g', () => {
@@ -55,6 +56,20 @@ describe('remaining', () => {
 
   it('no baja de 0', () => {
     expect(remaining(2800, 2500)).toBe(0);
+  });
+});
+
+describe('weightAnomalyWarning', () => {
+  it('avisa si peso >> media', () => {
+    expect(weightAnomalyWarning(100, [10, 15, 20, 12])).toMatch(/muy alto/);
+  });
+
+  it('avisa si peso << media', () => {
+    expect(weightAnomalyWarning(2, [20, 22, 25, 18])).toMatch(/muy bajo/);
+  });
+
+  it('sin historial suficiente → null', () => {
+    expect(weightAnomalyWarning(100, [20, 22])).toBeNull();
   });
 });
 

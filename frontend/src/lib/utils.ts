@@ -78,4 +78,39 @@ export function remaining(value: number, goal: number) {
   return Math.max(0, goal - value);
 }
 
+export function median(values: number[]): number | null {
+  const nums = values.filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b);
+  if (nums.length === 0) return null;
+  const mid = Math.floor(nums.length / 2);
+  return nums.length % 2 === 0 ? (nums[mid - 1] + nums[mid]) / 2 : nums[mid];
+}
+
+export function weightAnomalyWarning(weight: number, historyWeights: number[]): string | null {
+  if (!Number.isFinite(weight) || weight <= 0) return null;
+  const med = median(historyWeights);
+  if (med == null || historyWeights.filter((w) => w > 0).length < 3) return null;
+  if (weight > med * 2.5) {
+    return `Peso muy alto vs tu media (~${Math.round(med)} kg). ¿Seguro?`;
+  }
+  if (weight < med / 3) {
+    return `Peso muy bajo vs tu media (~${Math.round(med)} kg). ¿Seguro?`;
+  }
+  return null;
+}
+
+export const EXERCISE_CATEGORY_ICONS: Record<string, string> = {
+  Abs: '🏋️',
+  Arms: '💪',
+  Back: '🦴',
+  Calves: '🦵',
+  Cardio: '🏃',
+  Chest: '🫁',
+  Legs: '🦿',
+  Shoulders: '🤷',
+};
+
+export function exerciseCategoryIcon(category?: string | null) {
+  return EXERCISE_CATEGORY_ICONS[category || ''] || '🏋️';
+}
+
 export type { Macros, MacrosPer100g, FoodProduct, MealLog, WorkoutLog, ExerciseLog, ExerciseSet, Exercise, Routine, RoutineDay, RoutineExercise } from '../types';

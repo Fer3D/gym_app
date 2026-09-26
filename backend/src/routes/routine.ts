@@ -369,6 +369,7 @@ routineRouter.post('/:id/start', async (req: Request, res: Response) => {
             exerciseName: ex.name,
             muscleGroup: ex.muscleGroup || null,
             category: ex.category || null,
+            imageUrl: ex.imageUrl || null,
             order: i,
           },
         })
@@ -415,6 +416,7 @@ routineRouter.post('/explore/:id/start', async (req: Request, res: Response) => 
             exerciseName: ex.name,
             muscleGroup: ex.muscleGroup || null,
             category: ex.category || null,
+            imageUrl: ex.imageUrl || null,
             order: i,
           },
         })

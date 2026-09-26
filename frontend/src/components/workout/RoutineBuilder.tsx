@@ -72,6 +72,7 @@ export function RoutineBuilder({ onSaved, onCancel }: RoutineBuilderProps) {
       muscleGroup: exercise.muscles[0]?.name || exercise.category,
       sets: 3,
       reps: 10,
+      imageUrl: exercise.images?.[0] || undefined,
     };
     setDays((prev) =>
       prev.map((d, i) =>

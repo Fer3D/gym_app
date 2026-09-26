@@ -4,12 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft, ChevronRight, Plus, Trash2, Check, X,
-  Dumbbell as DumbbellIcon, Zap, BookOpen, Compass, Play,
+  Zap, BookOpen, Compass, Play,
   ChevronDown, ChevronUp, Pencil,
 } from 'lucide-react';
 import { workoutApi, routineApi } from '../lib/api';
 import type { Exercise, WorkoutLog, ExerciseLog, Routine } from '../lib/utils';
-import { todayString, dateToString, formatDateLabel, isValidDateString } from '../lib/utils';
+import { todayString, dateToString, formatDateLabel, isValidDateString, weightAnomalyWarning, exerciseCategoryIcon } from '../lib/utils';
+import type { ExerciseSet } from '../lib/utils';
 import { ExerciseSearch } from '../components/workout/ExerciseSearch';
 import { RoutineBuilder } from '../components/workout/RoutineBuilder';
 import { ExploreRoutines } from '../components/workout/ExploreRoutines';
@@ -29,8 +30,20 @@ export function WorkoutPage() {
   );
   const [showExerciseSearch, setShowExerciseSearch] = useState(false);
   const [activeWorkoutId, setActiveWorkoutId] = useState<number | null>(null);
+  const [openSetTypeId, setOpenSetTypeId] = useState<number | null>(null);
 
   const [startingRoutine, setStartingRoutine] = useState<Routine | null>(null);
+
+  useEffect(() => {
+    if (openSetTypeId == null) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el?.closest('[data-set-type-menu], [data-set-type-trigger]')) return;
+      setOpenSetTypeId(null);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [openSetTypeId]);
 
   useEffect(() => {
     const fromUrl = searchParams.get('date');
@@ -73,6 +86,7 @@ export function WorkoutPage() {
         exerciseName: exercise.name,
         muscleGroup: (exercise.muscles[0]?.name) || '',
         category: exercise.category,
+        imageUrl: exercise.images?.[0] || null,
         order: 0,
       }),
     onSuccess: () => {
@@ -83,6 +97,12 @@ export function WorkoutPage() {
 
   const deleteExerciseMutation = useMutation({
     mutationFn: (id: number) => workoutApi.deleteExercise(id),
+    onSuccess: () => invalidateWorkoutDay(),
+  });
+
+  const updateExerciseMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
+      workoutApi.updateExercise(id, data),
     onSuccess: () => invalidateWorkoutDay(),
   });
 
@@ -132,6 +152,7 @@ export function WorkoutPage() {
     (deleteWorkoutMutation.isError && 'No se pudo eliminar el entrenamiento.') ||
     (addExerciseMutation.isError && 'No se pudo añadir el ejercicio.') ||
     (deleteExerciseMutation.isError && 'No se pudo eliminar el ejercicio.') ||
+    (updateExerciseMutation.isError && 'No se pudo actualizar el ejercicio.') ||
     (addSetMutation.isError && 'No se pudo añadir la serie.') ||
     (updateSetMutation.isError && 'No se pudo actualizar la serie.') ||
     (deleteSetMutation.isError && 'No se pudo eliminar la serie.') ||
@@ -283,9 +304,12 @@ export function WorkoutPage() {
                     <ExerciseCard
                       key={ex.id}
                       exercise={ex}
+                      openSetTypeId={openSetTypeId}
+                      onOpenSetTypeId={setOpenSetTypeId}
                       onAddSet={(data) => addSetMutation.mutate({ exerciseId: ex.id, data })}
                       onUpdateSet={(id, data) => updateSetMutation.mutate({ id, data })}
                       onDeleteSet={(id) => deleteSetMutation.mutate(id)}
+                      onUpdateExercise={(data) => updateExerciseMutation.mutate({ id: ex.id, data })}
                       onDelete={() => deleteExerciseMutation.mutate(ex.id)}
                     />
                   ))}
@@ -624,72 +648,277 @@ function SavedRoutinesList({
     </div>
   );
 }
+const REST_OPTIONS = [
+  { value: 0, label: 'Sin descanso' },
+  ...Array.from({ length: 20 }, (_, i) => {
+    const value = (i + 1) * 15;
+    const m = Math.floor(value / 60);
+    const s = value % 60;
+    return {
+      value,
+      label: `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`,
+    };
+  }),
+];
 
-function ExerciseCard({ exercise, onAddSet, onUpdateSet, onDeleteSet, onDelete }: {
+const SET_TYPE_OPTIONS: { value: NonNullable<ExerciseSet['setType']>; label: string; badge: string }[] = [
+  { value: 'warmup', label: 'Calentamiento', badge: 'W' },
+  { value: 'normal', label: 'Normal', badge: '1' },
+  { value: 'failure', label: 'Al fallo', badge: 'F' },
+  { value: 'drop', label: 'Drop', badge: 'D' },
+];
+
+function formatRest(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function setBadge(set: ExerciseSet, normalIndex: number) {
+  const t = set.setType || 'normal';
+  if (t === 'warmup') return 'W';
+  if (t === 'failure') return 'F';
+  if (t === 'drop') return 'D';
+  return String(normalIndex);
+}
+
+function RestTimer({ seconds, onDone }: { seconds: number; onDone: () => void }) {
+  const [left, setLeft] = useState(seconds);
+
+  useEffect(() => {
+    setLeft(seconds);
+  }, [seconds]);
+
+  useEffect(() => {
+    if (left <= 0) {
+      onDone();
+      return;
+    }
+    const id = window.setTimeout(() => setLeft((n) => n - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [left, onDone]);
+
+  const pctLeft = seconds > 0 ? (left / seconds) * 100 : 0;
+
+  return (
+    <div className="rounded-xl border border-indigo-500/30 bg-indigo-950/40 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-xs font-medium text-indigo-300">Descanso</p>
+        <span className="font-mono text-lg font-bold tabular-nums text-white">{formatRest(left)}</span>
+      </div>
+      <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div className="h-full rounded-full bg-indigo-500 transition-[width] duration-1000 linear" style={{ width: `${pctLeft}%` }} />
+      </div>
+      <button
+        type="button"
+        onClick={onDone}
+        className="w-full rounded-lg bg-white/10 py-1.5 text-xs text-slate-300 transition-colors hover:bg-white/15"
+      >
+        Saltar
+      </button>
+    </div>
+  );
+}
+
+function ExerciseCard({
+  exercise,
+  openSetTypeId,
+  onOpenSetTypeId,
+  onAddSet,
+  onUpdateSet,
+  onDeleteSet,
+  onUpdateExercise,
+  onDelete,
+}: {
   exercise: ExerciseLog;
-  onAddSet: (data: any) => void;
-  onUpdateSet: (id: number, data: any) => void;
+  openSetTypeId: number | null;
+  onOpenSetTypeId: (id: number | null) => void;
+  onAddSet: (data: Record<string, unknown>) => void;
+  onUpdateSet: (id: number, data: Record<string, unknown>) => void;
   onDeleteSet: (id: number) => void;
+  onUpdateExercise: (data: Record<string, unknown>) => void;
   onDelete: () => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [note, setNote] = useState(exercise.notes || '');
+  const [restTimer, setRestTimer] = useState<number | null>(null);
+  const [weightWarning, setWeightWarning] = useState<string | null>(null);
+
+  const { data: history = [] } = useQuery({
+    queryKey: ['exercise-history', exercise.exerciseId],
+    queryFn: () => workoutApi.exerciseHistory(exercise.exerciseId).then((r) => r.data as { weight: number }[]),
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    setNote(exercise.notes || '');
+  }, [exercise.notes]);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      if ((exercise.notes || '') !== note) {
+        onUpdateExercise({ notes: note || null });
+      }
+    }, 500);
+    return () => window.clearTimeout(t);
+  }, [note, exercise.notes, onUpdateExercise]);
+
   const nextSet = (exercise.sets?.length || 0) + 1;
+  const last = exercise.sets?.[exercise.sets.length - 1];
+  const defaultWeight = last?.weight || 0;
+  const defaultReps = last?.reps || 10;
+  const defaultRepsMin = last?.repsMin || 8;
+  const defaultRepsMax = last?.repsMax || 10;
+  const repMode = exercise.repMode || 'reps';
+  const restSeconds = exercise.restSeconds ?? 120;
 
-  const defaultWeight = exercise.sets && exercise.sets.length > 0
-    ? exercise.sets[exercise.sets.length - 1].weight || 0 : 0;
-  const defaultReps = exercise.sets && exercise.sets.length > 0
-    ? exercise.sets[exercise.sets.length - 1].reps || 10 : 10;
+  const totalVolume = (exercise.sets || []).reduce((sum, s) => {
+    const r = s.reps ?? (s.repsMin && s.repsMax ? (s.repsMin + s.repsMax) / 2 : 0);
+    return sum + (s.weight || 0) * r;
+  }, 0);
 
-  const totalVolume = (exercise.sets || []).reduce((sum, s) => sum + (s.weight || 0) * (s.reps || 0), 0);
+  let normalCounter = 0;
+  const setsWithBadge = (exercise.sets || []).map((set) => {
+    const isNormal = (set.setType || 'normal') === 'normal';
+    if (isNormal) normalCounter += 1;
+    return { set, badge: setBadge(set, normalCounter) };
+  });
+
+  const checkWeight = (w: number) => {
+    const hist = history.map((h) => h.weight).filter((x) => x > 0);
+    setWeightWarning(weightAnomalyWarning(w, hist));
+  };
+
+  const handleComplete = (setId: number, data: Record<string, unknown>, completing: boolean) => {
+    onUpdateSet(setId, data);
+    if (completing && restSeconds > 0) setRestTimer(restSeconds);
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass border border-white/5 rounded-2xl overflow-hidden"
+      className="glass rounded-2xl border border-white/5"
     >
-
       <div className="flex items-center gap-3 p-4">
-        <div className="w-9 h-9 bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-          <DumbbellIcon size={18} className="text-purple-400" />
+        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-purple-900/30 text-base">
+          {exercise.imageUrl ? (
+            <img
+              src={exercise.imageUrl}
+              alt=""
+              className="h-full w-full object-contain bg-slate-900/40"
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const fallback = e.currentTarget.nextElementSibling as HTMLElement | null;
+                if (fallback) fallback.style.display = 'block';
+              }}
+            />
+          ) : null}
+          <span style={{ display: exercise.imageUrl ? 'none' : 'block' }}>
+            {exerciseCategoryIcon(exercise.category)}
+          </span>
         </div>
-        <button className="flex-1 text-left" onClick={() => setCollapsed(!collapsed)}>
-          <p className="text-white font-medium text-sm">{exercise.exerciseName}</p>
-          <p className="text-slate-500 text-xs">
+        <button type="button" className="flex-1 text-left" onClick={() => setCollapsed(!collapsed)}>
+          <p className="text-sm font-medium text-white">{exercise.exerciseName}</p>
+          <p className="text-xs text-slate-500">
             {exercise.muscleGroup && `${exercise.muscleGroup} · `}
             {exercise.sets?.length || 0} series{totalVolume > 0 && ` · ${Math.round(totalVolume)}kg vol.`}
           </p>
         </button>
-        <button onClick={onDelete} className="text-slate-600 hover:text-red-400 transition-colors p-1">
+        <button type="button" onClick={onDelete} className="p-1 text-slate-600 transition-colors hover:text-red-400">
           <Trash2 size={14} />
         </button>
       </div>
 
       {!collapsed && (
-        <div className="px-4 pb-4 space-y-2 border-t border-white/5 pt-3">
-
-          <div className="grid grid-cols-12 gap-2 text-[10px] text-slate-500 px-1 uppercase tracking-wide">
-            <span className="col-span-1">#</span>
-            <span className="col-span-4">Peso (kg)</span>
-            <span className="col-span-4">Reps</span>
-            <span className="col-span-2">✓</span>
-            <span className="col-span-1"></span>
+        <div className="space-y-3 border-t border-white/5 px-4 pb-4 pt-3">
+          <div>
+            <label className="mb-1 block text-[10px] uppercase tracking-wide text-slate-500">Nota</label>
+            <input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Añadir nota fijada"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
+            />
           </div>
 
-          {(exercise.sets || []).map((set) => (
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-xs text-slate-400">
+              <span>Descanso</span>
+              <select
+                value={restSeconds}
+                onChange={(e) => onUpdateExercise({ restSeconds: parseInt(e.target.value, 10) })}
+                className="rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
+              >
+                {REST_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value} className="bg-[#14171c]">
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {restTimer != null && (
+            <RestTimer seconds={restTimer} onDone={() => setRestTimer(null)} />
+          )}
+
+          {weightWarning && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-xs text-amber-300">
+              {weightWarning}
+            </div>
+          )}
+
+          <div className="grid grid-cols-12 gap-2 px-1 text-[10px] uppercase tracking-wide text-slate-500">
+            <span className="col-span-2">Serie</span>
+            <span className="col-span-3">Kg</span>
+            <button
+              type="button"
+              className="col-span-4 flex items-center gap-0.5 text-left hover:text-indigo-400"
+              onClick={() => onUpdateExercise({ repMode: repMode === 'reps' ? 'range' : 'reps' })}
+            >
+              {repMode === 'range' ? 'Intervalo' : 'Reps'}
+              <ChevronDown size={10} />
+            </button>
+            <span className="col-span-2">✓</span>
+            <span className="col-span-1" />
+          </div>
+
+          {setsWithBadge.map(({ set, badge }) => (
             <SetRow
               key={set.id}
               set={set}
+              badge={badge}
+              repMode={repMode}
+              typeOpen={openSetTypeId === set.id}
+              onToggleType={() =>
+                onOpenSetTypeId(openSetTypeId === set.id ? null : set.id)
+              }
+              onCloseType={() => onOpenSetTypeId(null)}
               onUpdate={(data) => onUpdateSet(set.id, data)}
+              onComplete={(data, completing) => handleComplete(set.id, data, completing)}
               onDelete={() => onDeleteSet(set.id)}
+              onWeightCheck={checkWeight}
             />
           ))}
 
           <button
-            onClick={() => onAddSet({ setNumber: nextSet, reps: defaultReps, weight: defaultWeight })}
-            className="w-full py-2 rounded-xl border border-dashed border-white/10 text-slate-500 hover:text-indigo-400 hover:border-indigo-500/30 text-xs transition-colors flex items-center justify-center gap-1"
+            type="button"
+            onClick={() =>
+              onAddSet({
+                setNumber: nextSet,
+                setType: 'normal',
+                weight: defaultWeight,
+                ...(repMode === 'range'
+                  ? { repsMin: defaultRepsMin, repsMax: defaultRepsMax }
+                  : { reps: defaultReps }),
+              })
+            }
+            className="flex w-full items-center justify-center gap-1 rounded-xl border border-dashed border-white/10 py-2 text-xs text-slate-500 transition-colors hover:border-indigo-500/30 hover:text-indigo-400"
           >
-            <Plus size={12} /> Añadir serie {nextSet}
+            <Plus size={12} /> Agregar serie
           </button>
         </div>
       )}
@@ -697,25 +926,118 @@ function ExerciseCard({ exercise, onAddSet, onUpdateSet, onDeleteSet, onDelete }
   );
 }
 
-function SetRow({ set, onUpdate, onDelete }: { set: any; onUpdate: (d: any) => void; onDelete: () => void }) {
-  const [weight, setWeight] = useState(set.weight ?? '');
-  const [reps, setReps] = useState(set.reps ?? '');
+function SetRow({
+  set,
+  badge,
+  repMode,
+  typeOpen,
+  onToggleType,
+  onCloseType,
+  onUpdate,
+  onComplete,
+  onDelete,
+  onWeightCheck,
+}: {
+  set: ExerciseSet;
+  badge: string;
+  repMode: 'reps' | 'range';
+  typeOpen: boolean;
+  onToggleType: () => void;
+  onCloseType: () => void;
+  onUpdate: (d: Record<string, unknown>) => void;
+  onComplete: (d: Record<string, unknown>, completing: boolean) => void;
+  onDelete: () => void;
+  onWeightCheck: (w: number) => void;
+}) {
+  const [weight, setWeight] = useState(String(set.weight ?? ''));
+  const [reps, setReps] = useState(String(set.reps ?? ''));
+  const [repsMin, setRepsMin] = useState(String(set.repsMin ?? ''));
+  const [repsMax, setRepsMax] = useState(String(set.repsMax ?? ''));
   const [completed, setCompleted] = useState(set.completed);
 
+  useEffect(() => {
+    setWeight(String(set.weight ?? ''));
+    setReps(String(set.reps ?? ''));
+    setRepsMin(String(set.repsMin ?? ''));
+    setRepsMax(String(set.repsMax ?? ''));
+    setCompleted(set.completed);
+  }, [set.weight, set.reps, set.repsMin, set.repsMax, set.completed]);
+
+  const payload = () => {
+    const w = parseFloat(weight) || 0;
+    return {
+      weight: w,
+      completed,
+      setType: set.setType || 'normal',
+      ...(repMode === 'range'
+        ? {
+            repsMin: parseInt(repsMin, 10) || 0,
+            repsMax: parseInt(repsMax, 10) || 0,
+            reps: null,
+          }
+        : {
+            reps: parseInt(reps, 10) || 0,
+          }),
+    };
+  };
+
   const handleBlur = () => {
-    onUpdate({ weight: parseFloat(weight as string) || 0, reps: parseInt(reps as string) || 0, completed });
+    const w = parseFloat(weight) || 0;
+    onWeightCheck(w);
+    onUpdate(payload());
   };
 
   const toggleCompleted = () => {
     const nc = !completed;
     setCompleted(nc);
-    onUpdate({ weight: parseFloat(weight as string) || 0, reps: parseInt(reps as string) || 0, completed: nc });
+    const data = { ...payload(), completed: nc };
+    onComplete(data, nc);
   };
 
+  const currentType = set.setType || 'normal';
+  const typeColor =
+    currentType === 'warmup'
+      ? 'text-cyan-400'
+      : currentType === 'failure'
+        ? 'text-red-400'
+        : currentType === 'drop'
+          ? 'text-amber-400'
+          : 'text-slate-300';
+
   return (
-    <div className={`grid grid-cols-12 gap-2 items-center rounded-lg px-1 py-1 transition-colors ${completed ? 'bg-green-900/10' : ''}`}>
-      <span className="col-span-1 text-slate-500 text-xs font-mono">{set.setNumber}</span>
-      <div className="col-span-4">
+    <div className={`relative grid grid-cols-12 items-center gap-2 rounded-lg px-1 py-1 transition-colors ${completed ? 'bg-green-900/10' : ''}`}>
+      <div className="col-span-2">
+        <button
+          type="button"
+          data-set-type-trigger
+          onClick={onToggleType}
+          className={`flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 text-xs font-bold ${typeColor}`}
+        >
+          {badge}
+        </button>
+        {typeOpen && (
+          <div
+            data-set-type-menu
+            className="absolute left-0 bottom-full z-50 mb-1 w-44 rounded-xl border border-white/10 bg-[#1b1f27] py-1 shadow-xl"
+          >
+            {SET_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs text-slate-300 hover:bg-white/5"
+                onClick={() => {
+                  onCloseType();
+                  onUpdate({ ...payload(), setType: opt.value });
+                }}
+              >
+                <span className="w-4 font-bold text-indigo-400">{opt.badge}</span>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="col-span-3">
         <input
           type="number"
           value={weight}
@@ -723,28 +1045,55 @@ function SetRow({ set, onUpdate, onDelete }: { set: any; onUpdate: (d: any) => v
           onBlur={handleBlur}
           placeholder="0"
           step="0.5"
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-white text-xs text-center focus:outline-none focus:border-indigo-500"
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-center text-xs text-white focus:border-indigo-500 focus:outline-none"
         />
       </div>
-      <div className="col-span-4">
-        <input
-          type="number"
-          value={reps}
-          onChange={(e) => setReps(e.target.value)}
-          onBlur={handleBlur}
-          placeholder="0"
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-white text-xs text-center focus:outline-none focus:border-indigo-500"
-        />
-      </div>
+      {repMode === 'range' ? (
+        <div className="col-span-4 flex items-center gap-1">
+          <input
+            type="number"
+            value={repsMin}
+            onChange={(e) => setRepsMin(e.target.value)}
+            onBlur={handleBlur}
+            placeholder="8"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-1 py-1.5 text-center text-xs text-white focus:border-indigo-500 focus:outline-none"
+          />
+          <span className="text-slate-600">-</span>
+          <input
+            type="number"
+            value={repsMax}
+            onChange={(e) => setRepsMax(e.target.value)}
+            onBlur={handleBlur}
+            placeholder="10"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-1 py-1.5 text-center text-xs text-white focus:border-indigo-500 focus:outline-none"
+          />
+        </div>
+      ) : (
+        <div className="col-span-4">
+          <input
+            type="number"
+            value={reps}
+            onChange={(e) => setReps(e.target.value)}
+            onBlur={handleBlur}
+            placeholder="0"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-center text-xs text-white focus:border-indigo-500 focus:outline-none"
+          />
+        </div>
+      )}
       <button
+        type="button"
         onClick={toggleCompleted}
-        className={`col-span-2 w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+        className={`col-span-2 flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
           completed ? 'bg-green-600 text-white' : 'bg-white/5 text-slate-500 hover:bg-green-900/30 hover:text-green-400'
         }`}
       >
         <Check size={13} />
       </button>
-      <button onClick={onDelete} className="col-span-1 text-slate-600 hover:text-red-400 transition-colors flex items-center justify-center">
+      <button
+        type="button"
+        onClick={onDelete}
+        className="col-span-1 flex items-center justify-center text-slate-600 transition-colors hover:text-red-400"
+      >
         <X size={12} />
       </button>
     </div>

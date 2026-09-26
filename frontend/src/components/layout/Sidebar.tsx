@@ -55,12 +55,6 @@ export function Sidebar() {
                 >
                   <Icon size={18} className="flex-shrink-0" />
                   <span className="text-sm font-medium">{label}</span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeIndicator"
-                      className="ml-auto h-1.5 w-1.5 rounded-full bg-white"
-                    />
-                  )}
                 </motion.div>
               </NavLink>
             );

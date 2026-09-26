@@ -28,10 +28,12 @@ export const workoutApi = {
   create: (date: string, data: any) => api.post(`/workouts/day/${date}`, data),
   delete: (id: number) => api.delete(`/workouts/${id}`),
   addExercise: (workoutId: number, data: any) => api.post(`/workouts/${workoutId}/exercise`, data),
+  updateExercise: (id: number, data: any) => api.put(`/workouts/exercise/${id}`, data),
   deleteExercise: (id: number) => api.delete(`/workouts/exercise/${id}`),
   addSet: (exerciseId: number, data: any) => api.post(`/workouts/exercise/${exerciseId}/set`, data),
   updateSet: (id: number, data: any) => api.put(`/workouts/set/${id}`, data),
   deleteSet: (id: number) => api.delete(`/workouts/set/${id}`),
+  exerciseHistory: (exerciseId: string) => api.get(`/workouts/exercise-history/${exerciseId}`),
 };
 
 export const userApi = {

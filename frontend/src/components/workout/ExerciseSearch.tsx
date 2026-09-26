@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ChevronRight } from 'lucide-react';
 import { exerciseApi } from '../../lib/api';
 import type { Exercise } from '../../lib/utils';
+import { EXERCISE_CATEGORY_ICONS, exerciseCategoryIcon } from '../../lib/utils';
 import { Spinner, QueryError } from '../common/UI';
 
 interface ExerciseSearchProps {
@@ -19,11 +20,6 @@ const CATEGORY_ES: Record<string, string> = {
   'Chest': 'Pecho',
   'Legs': 'Piernas',
   'Shoulders': 'Hombros',
-};
-
-const CATEGORY_ICONS: Record<string, string> = {
-  'Abs': '🏋️', 'Arms': '💪', 'Back': '🦴', 'Calves': '🦵',
-  'Cardio': '🏃', 'Chest': '🫁', 'Legs': '🦿', 'Shoulders': '🤷',
 };
 
 export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
@@ -96,7 +92,7 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
                 onClick={() => { setSelectedCategory(cat.name); setPage(1); }}
                 className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedCategory === cat.name ? 'bg-indigo-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
               >
-                <span>{CATEGORY_ICONS[cat.name] || '🏋️'}</span>
+                <span>{EXERCISE_CATEGORY_ICONS[cat.name] || '🏋️'}</span>
                 {CATEGORY_ES[cat.name] || cat.name}
               </button>
             ))}
@@ -125,8 +121,12 @@ export function ExerciseSearch({ onSelect }: ExerciseSearchProps) {
                   onClick={() => onSelect(ex)}
                   className="w-full flex items-center gap-3 p-3 bg-white/3 hover:bg-white/8 rounded-xl border border-white/5 hover:border-indigo-500/30 transition-all text-left"
                 >
-                  <div className="w-10 h-10 bg-indigo-900/30 rounded-lg flex items-center justify-center flex-shrink-0 text-lg">
-                    {CATEGORY_ICONS[ex.category] || '🏋️'}
+                  <div className="w-10 h-10 bg-indigo-900/30 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden text-lg">
+                    {ex.images?.[0] ? (
+                      <img src={ex.images[0]} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    ) : (
+                      exerciseCategoryIcon(ex.category)
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-medium leading-tight">{ex.name}</p>

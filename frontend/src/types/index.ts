@@ -72,10 +72,14 @@ export interface TdeeResult {
 export interface ExerciseSet {
   id: number;
   setNumber: number;
+  setType?: 'warmup' | 'normal' | 'failure' | 'drop';
   reps?: number;
+  repsMin?: number;
+  repsMax?: number;
   weight?: number;
   duration?: number;
   distance?: number;
+  restTime?: number;
   completed: boolean;
   rpe?: number;
 }
@@ -86,7 +90,10 @@ export interface ExerciseLog {
   exerciseName: string;
   muscleGroup?: string;
   category?: string;
+  imageUrl?: string | null;
   notes?: string;
+  restSeconds?: number;
+  repMode?: 'reps' | 'range';
   order: number;
   sets: ExerciseSet[];
 }
@@ -118,6 +125,7 @@ export interface RoutineExercise {
   sets: number;
   reps: number;
   exerciseId?: string;
+  imageUrl?: string;
 }
 
 export interface RoutineDay {
