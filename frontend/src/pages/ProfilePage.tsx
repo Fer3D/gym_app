@@ -131,10 +131,10 @@ export function ProfilePage() {
     { value: 'no_especificado', icon: '⚪' },
   ] as const;
 
-  const LANG_OPTIONS: { value: LanguagePreference; label: string; desc: string }[] = [
-    { value: 'system', label: t('language.system'), desc: t('language.systemDesc') },
-    { value: 'es', label: t('language.spanish'), desc: 'ES' },
-    { value: 'en', label: t('language.english'), desc: 'EN' },
+  const LANG_OPTIONS: { value: LanguagePreference; label: string }[] = [
+    { value: 'system', label: t('language.systemOption') },
+    { value: 'es', label: t('language.spanish') },
+    { value: 'en', label: t('language.english') },
   ];
 
   if (isLoading && !profile) {
@@ -173,41 +173,6 @@ export function ProfilePage() {
       {updateMutation.isError && (
         <MutationError message={t('profile.saveError')} />
       )}
-
-      <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <Languages size={16} className="text-indigo-400" aria-hidden />
-          <h2 className="text-white font-semibold text-sm">{t('language.sectionTitle')}</h2>
-        </div>
-        <p className="text-slate-400 text-xs">{t('language.sectionHint')}</p>
-        <div className="space-y-2" role="group" aria-label={t('language.sectionTitle')}>
-          {LANG_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              aria-pressed={langPref === opt.value}
-              onClick={() => handleLanguage(opt.value)}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                langPref === opt.value
-                  ? 'bg-indigo-600/20 border-indigo-500/40 text-white'
-                  : 'bg-white/3 border-white/5 text-slate-400 hover:bg-white/8'
-              }`}
-            >
-              <div>
-                <p className={`text-sm font-medium ${langPref === opt.value ? 'text-white' : 'text-slate-300'}`}>
-                  {opt.label}
-                </p>
-                <p className="text-xs text-slate-400">{opt.desc}</p>
-              </div>
-              {langPref === opt.value && (
-                <span className="ml-auto text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full">
-                  {t('language.active')}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
 
       <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-2">
@@ -391,6 +356,29 @@ export function ProfilePage() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="glass border border-indigo-500/10 rounded-2xl p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <Languages size={16} className="text-indigo-400" aria-hidden />
+          <h2 className="text-white font-semibold text-sm">{t('language.sectionTitle')}</h2>
+        </div>
+        <p className="text-slate-400 text-xs">{t('language.sectionHint')}</p>
+        <div>
+          <label htmlFor="profile-language" className="sr-only">{t('language.sectionTitle')}</label>
+          <select
+            id="profile-language"
+            value={langPref}
+            onChange={(e) => handleLanguage(e.target.value as LanguagePreference)}
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
+          >
+            {LANG_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value} className="bg-[#14171c] text-white">
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
     </motion.div>

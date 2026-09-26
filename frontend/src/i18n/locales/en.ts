@@ -59,6 +59,7 @@ const en = {
     sectionHint: 'Defaults to your browser language. You can force Spanish or English.',
     system: 'System',
     systemDesc: 'Match browser / OS',
+    systemOption: 'System (browser / OS)',
     spanish: 'Español',
     english: 'English',
     active: 'Active',

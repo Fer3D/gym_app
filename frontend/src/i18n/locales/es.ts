@@ -59,6 +59,7 @@ const es = {
     sectionHint: 'Por defecto usa el idioma del navegador. Puedes forzar español o inglés.',
     system: 'Sistema',
     systemDesc: 'Igual que el navegador / SO',
+    systemOption: 'Sistema (navegador / SO)',
     spanish: 'Español',
     english: 'English',
     active: 'Activo',
