@@ -66,7 +66,8 @@ export function FoodSearch({ onSelect, mealType, onClose }: FoodSearchProps) {
     setErrorMsg(null);
     finishedRef.current = false;
 
-    const url = `/api/foods/search/stream?q=${encodeURIComponent(q)}${force ? '&force=true' : ''}`;
+    const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+    const url = `${apiBase}/foods/search/stream?q=${encodeURIComponent(q)}${force ? '&force=true' : ''}`;
     const es = new EventSource(url);
     esRef.current = es;
 

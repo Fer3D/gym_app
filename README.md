@@ -6,8 +6,14 @@
 
 <p align="center">
   Seguimiento de macros, rutinas, calendario y perfil en una sola app.<br>
-  Frontend React + backend Express + SQLite.
+  Frontend React + backend Express + LibSQL (SQLite local / Turso en demo).
 </p>
+
+<p align="center">
+  <a href="https://YOUR-VERCEL-APP.vercel.app"><img src="https://img.shields.io/badge/Live%20demo-Vercel-black?style=for-the-badge&logo=vercel" alt="Live demo"></a>
+</p>
+
+> **Demo pública:** sin auth. Todos comparten el mismo usuario (`userId` 1). Ideal para probar; no metas datos personales.
 
 ---
 
@@ -86,8 +92,32 @@
 | Pieza | Detalle |
 | --- | --- |
 | **Express 5** | API REST (`/api/...`) |
-| **Prisma + LibSQL** | ORM sobre SQLite local (`backend/dev.db`) |
+| **Prisma + LibSQL** | ORM: SQLite local (`file:./dev.db`) o Turso (`libsql://...`) en demo |
 | **CORS / dotenv** | Origen frontend + variables de entorno |
+
+### Deploy (demo)
+
+| Pieza | Host |
+| --- | --- |
+| Frontend | Vercel (`frontend/`, env `VITE_API_URL`) |
+| API | Render Web Service (`backend/`, `npm run start:prod`) |
+| DB | Turso LibSQL (`DATABASE_URL` + `TURSO_AUTH_TOKEN`) |
+
+Variables clave (ver `.env.example`):
+
+```bash
+# backend
+DATABASE_URL=libsql://...
+TURSO_AUTH_TOKEN=...
+CORS_ORIGIN=https://tu-app.vercel.app
+PORT=3001
+
+# frontend (Vercel)
+VITE_API_URL=https://tu-api.onrender.com/api
+```
+
+Render: root `backend`, build `npm install && npm run build`, start `npm run start:prod`.
+Vercel: root `frontend`.
 
 ### Herramientas
 
@@ -107,8 +137,8 @@
 
 ```
 gym_app/
-├── frontend/     # React + Vite + Tailwind
-├── backend/      # Express + Prisma + SQLite
+├── frontend/     # React + Vite + Tailwind (Vercel)
+├── backend/      # Express + Prisma + LibSQL (Render)
 ├── package.json  # concurrently (dev frontend + backend)
 └── README.md
 ```
@@ -117,9 +147,14 @@ gym_app/
 
 ## Cómo arrancar
 
+Copia `.env.example` a `backend/.env` (local: `DATABASE_URL=file:./dev.db`).
+
 ```bash
 # Dependencias
 npm run install:all
+
+# Migraciones (primera vez / tras clonar)
+cd backend && npx prisma migrate deploy && cd ..
 
 # Dev (API + UI)
 npm run dev
@@ -128,7 +163,7 @@ npm run dev
 | Servicio | URL típica |
 | --- | --- |
 | Frontend | `http://localhost:5173` |
-| Backend | `http://localhost:3000` (o puerto de `backend/.env`) |
+| Backend | `http://localhost:3001` |
 
 Scripts útiles backend:
 
